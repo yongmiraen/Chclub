@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fafaf9;
+  --foreground: #1c1917;
+  --accent: #b45309;
+  --accent-soft: #fef3c7;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Pretendard", "Apple SD Gothic Neo",
+    "Noto Sans KR", sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+}
