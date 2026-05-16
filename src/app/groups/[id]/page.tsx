@@ -71,7 +71,7 @@ export default async function GroupDetailPage({
 
         {/* 히어로 배너 */}
         <section
-          className={`relative grid h-44 place-items-center bg-gradient-to-br ${tone.bg}`}
+          className={`relative grid h-44 place-items-center ${tone.bg}`}
         >
           <div className="text-6xl drop-shadow-sm">
             {categoryEmoji(group.category)}

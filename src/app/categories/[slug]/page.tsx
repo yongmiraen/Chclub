@@ -38,7 +38,7 @@ export default async function CategoryDetail({
     <>
       <TopBar title={cat.label} back="/categories" />
       <section
-        className={`bg-gradient-to-br ${tone.bg} px-5 py-6`}
+        className={`${tone.bg} px-5 py-6`}
       >
         <div className="flex items-center gap-3">
           <span className="text-3xl">{cat.emoji}</span>

@@ -29,7 +29,7 @@ export default function CategoryIcon({
   const inner = (
     <div className="flex flex-col items-center gap-1.5">
       <div
-        className={`grid place-items-center rounded-full bg-gradient-to-br ${tone.bg} ${s.circle} shadow-inner ring-1 ring-white/50`}
+        className={`grid place-items-center rounded-full ${tone.bg} ${s.circle} ring-1 ${tone.ring}`}
       >
         <span aria-hidden>{cat.emoji}</span>
       </div>

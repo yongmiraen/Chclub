@@ -52,7 +52,7 @@ function Section({ title, group }: { title: string; group: "신앙" | "취미" }
                 className="flex items-center gap-3 px-4 py-3.5 active:bg-stone-50"
               >
                 <span
-                  className={`grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br ${tone.bg} text-lg ring-1 ring-white/50`}
+                  className={`grid h-9 w-9 place-items-center rounded-full ${tone.bg} text-lg ring-1 ${tone.ring}`}
                 >
                   {c.emoji}
                 </span>

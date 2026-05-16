@@ -20,7 +20,7 @@ export default function GroupListItem({
       }`}
     >
       <div
-        className={`grid h-20 w-20 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${tone.bg} text-3xl shadow-inner ring-1 ring-white/40`}
+        className={`grid h-20 w-20 shrink-0 place-items-center rounded-2xl ${tone.bg} text-3xl ring-1 ${tone.ring}`}
       >
         <span aria-hidden>{categoryEmoji(group.category)}</span>
       </div>
