@@ -33,6 +33,10 @@ export async function createGroup(
   const creatorNickname = str(form, "creator_nickname");
   const pin = pinDigits(form, "edit_pin");
 
+  // 로그인 여부 먼저 확인
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+
   if (title.length < 2 || title.length > 60)
     return { ok: false, error: "모임 이름은 2~60자로 입력해 주세요." };
   if (description.length > 2000)
@@ -41,16 +45,18 @@ export async function createGroup(
     return { ok: false, error: "카테고리를 선택해 주세요." };
   if (!Number.isFinite(maxMembers) || maxMembers < 2 || maxMembers > 200)
     return { ok: false, error: "정원은 2~200명으로 입력해 주세요." };
-  if (creatorNickname.length < 1 || creatorNickname.length > 20)
-    return { ok: false, error: "닉네임은 1~20자로 입력해 주세요." };
-  if (!pin)
-    return { ok: false, error: "수정용 PIN은 숫자 4자리로 입력해 주세요." };
   if (region.length > 30)
     return { ok: false, error: "지역은 30자 이내로 입력해 주세요." };
 
-  // 로그인한 사용자이면 owner_id 함께 저장
-  const authClient = await createServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
+  // 로그인 상태면 닉네임·PIN 불필요 (계정 정보 사용)
+  if (!user) {
+    if (creatorNickname.length < 1 || creatorNickname.length > 20)
+      return { ok: false, error: "닉네임은 1~20자로 입력해 주세요." };
+    if (!pin)
+      return { ok: false, error: "수정용 PIN은 숫자 4자리로 입력해 주세요." };
+  }
+
+  const displayName = user?.user_metadata?.name || user?.user_metadata?.full_name || creatorNickname;
 
   const { data, error } = await supabase
     .from("groups")
@@ -60,8 +66,8 @@ export async function createGroup(
       category,
       region: region || null,
       max_members: maxMembers,
-      creator_nickname: creatorNickname,
-      edit_pin_hash: hashPin(pin),
+      creator_nickname: user ? displayName : creatorNickname,
+      edit_pin_hash: pin ? hashPin(pin) : null,
       ...(user ? { owner_id: user.id } : {}),
     })
     .select("id")
@@ -87,7 +93,6 @@ export async function updateGroup(
   const maxMembers = Number(str(form, "max_members"));
   const pin = pinDigits(form, "edit_pin");
 
-  if (!pin) return { ok: false, error: "PIN을 4자리로 입력해 주세요." };
   if (title.length < 2 || title.length > 60)
     return { ok: false, error: "모임 이름은 2~60자로 입력해 주세요." };
   if (description.length > 2000)
@@ -97,16 +102,25 @@ export async function updateGroup(
   if (!Number.isFinite(maxMembers) || maxMembers < 2 || maxMembers > 200)
     return { ok: false, error: "정원은 2~200명으로 입력해 주세요." };
 
+  // 로그인 사용자이고 owner면 PIN 없이 수정 가능
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+
   const { data: group, error: fetchErr } = await supabase
     .from("groups")
-    .select("edit_pin_hash")
+    .select("edit_pin_hash, owner_id")
     .eq("id", groupId)
     .single();
 
   if (fetchErr || !group)
     return { ok: false, error: "모임을 찾을 수 없습니다." };
-  if (!verifyPin(pin, group.edit_pin_hash))
-    return { ok: false, error: "PIN이 일치하지 않습니다." };
+
+  const isOwner = user && group.owner_id === user.id;
+  if (!isOwner) {
+    if (!pin) return { ok: false, error: "PIN을 4자리로 입력해 주세요." };
+    if (!group.edit_pin_hash || !verifyPin(pin, group.edit_pin_hash))
+      return { ok: false, error: "PIN이 일치하지 않습니다." };
+  }
 
   const { error } = await supabase
     .from("groups")
@@ -132,18 +146,26 @@ export async function deleteGroup(
   form: FormData,
 ): Promise<ActionResult> {
   const pin = pinDigits(form, "edit_pin");
-  if (!pin) return { ok: false, error: "PIN을 4자리로 입력해 주세요." };
+
+  // 로그인 사용자이고 owner면 PIN 없이 삭제 가능
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
 
   const { data: group, error: fetchErr } = await supabase
     .from("groups")
-    .select("edit_pin_hash")
+    .select("edit_pin_hash, owner_id")
     .eq("id", groupId)
     .single();
 
   if (fetchErr || !group)
     return { ok: false, error: "모임을 찾을 수 없습니다." };
-  if (!verifyPin(pin, group.edit_pin_hash))
-    return { ok: false, error: "PIN이 일치하지 않습니다." };
+
+  const isOwner = user && group.owner_id === user.id;
+  if (!isOwner) {
+    if (!pin) return { ok: false, error: "PIN을 4자리로 입력해 주세요." };
+    if (!group.edit_pin_hash || !verifyPin(pin, group.edit_pin_hash))
+      return { ok: false, error: "PIN이 일치하지 않습니다." };
+  }
 
   const { error } = await supabase.from("groups").delete().eq("id", groupId);
   if (error) return { ok: false, error: error.message };

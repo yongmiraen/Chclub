@@ -15,11 +15,12 @@ type Props = {
     max_members?: number;
   };
   submitLabel: string;
+  hidePin?: boolean;  // 로그인 사용자는 PIN 불필요
 };
 
 const initial: ActionResult | null = null;
 
-export default function GroupForm({ action, mode, defaults = {}, submitLabel }: Props) {
+export default function GroupForm({ action, mode, defaults = {}, submitLabel, hidePin = false }: Props) {
   const [state, formAction, pending] = useActionState(action, initial);
   const error = state && !state.ok ? state.error : null;
   const spiritual = CATEGORIES.filter((c) => c.group === "신앙");
@@ -69,10 +70,12 @@ export default function GroupForm({ action, mode, defaults = {}, submitLabel }: 
         </Field>
       )}
 
-      <Field label={mode === "create" ? "나만 아는 PIN 번호" : "PIN 번호 확인"} hint="숫자 4자리 · 수정·삭제할 때 써요">
-        <input name="edit_pin" required inputMode="numeric" pattern="\d{4}" maxLength={4}
-          placeholder="예) 1234" className="input tracking-widest" />
-      </Field>
+      {!hidePin && (
+        <Field label={mode === "create" ? "나만 아는 PIN 번호" : "PIN 번호 확인"} hint="숫자 4자리 · 수정·삭제할 때 써요">
+          <input name="edit_pin" inputMode="numeric" pattern="\d{4}" maxLength={4}
+            placeholder="예) 1234" className="input tracking-widest" />
+        </Field>
+      )}
 
       <button type="submit" disabled={pending}
         className="w-full rounded-full bg-amber-700 px-5 py-3 font-medium text-white shadow-sm transition hover:bg-amber-800 disabled:bg-stone-400">
