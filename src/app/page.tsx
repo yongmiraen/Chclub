@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
 import { CATEGORIES } from "@/lib/categories";
+import { ALL_REGIONS } from "@/lib/regions";
 import CategoryIcon from "@/components/CategoryIcon";
 import GroupListItem from "@/components/GroupListItem";
 import TopBar from "@/components/TopBar";
@@ -20,17 +21,21 @@ const TABS: { key: SortKey; label: string }[] = [
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; deleted?: string }>;
+  searchParams: Promise<{ sort?: string; deleted?: string; region?: string }>;
 }) {
   const sp = await searchParams;
   const sort: SortKey = sp.sort === "popular" || sp.sort === "new" ? sp.sort : "discover";
+  const regionFilter = ALL_REGIONS.includes(sp.region ?? "") ? sp.region! : "";
 
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("groups")
     .select("*, memberships(count)")
-    .order("created_at", { ascending: false })
-    .returns<GroupsRow[]>();
+    .order("created_at", { ascending: false });
+
+  if (regionFilter) query = query.eq("region", regionFilter);
+
+  const { data, error } = await query.returns<GroupsRow[]>();
 
   let groups: GroupWithCount[] =
     data?.map((g) => ({ ...g, member_count: g.memberships?.[0]?.count ?? 0 })) ?? [];
@@ -52,11 +57,15 @@ export default async function Home({
         </div>
       )}
 
+      {/* 정렬 탭 */}
       <div className="sticky top-14 z-10 border-b border-stone-100 bg-white">
         <div className="flex">
           {TABS.map((t) => {
             const active = t.key === sort;
-            const href = t.key === "discover" ? "/" : `/?sort=${t.key}`;
+            const params = new URLSearchParams();
+            if (t.key !== "discover") params.set("sort", t.key);
+            if (regionFilter) params.set("region", regionFilter);
+            const href = `/${params.toString() ? `?${params}` : ""}`;
             return (
               <Link key={t.key} href={href}
                 className={`relative flex-1 px-3 py-3 text-center text-sm transition ${
@@ -70,6 +79,7 @@ export default async function Home({
         </div>
       </div>
 
+      {/* 카테고리 아이콘 */}
       <section className="border-b border-stone-100">
         <div className="overflow-x-auto">
           <div className="grid grid-flow-col grid-rows-2 gap-x-4 gap-y-3 px-4 py-4">
@@ -80,10 +90,23 @@ export default async function Home({
         </div>
       </section>
 
+      {/* 지역 필터 */}
+      <section className="border-b border-stone-100 px-4 py-3">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <RegionChip label="전체" value="" current={regionFilter} sort={sort} />
+          {ALL_REGIONS.map((r) => (
+            <RegionChip key={r} label={r} value={r} current={regionFilter} sort={sort} />
+          ))}
+        </div>
+      </section>
+
+      {/* 모임 리스트 */}
       <section>
         <div className="flex items-baseline justify-between px-4 pb-2 pt-5">
           <h2 className="text-lg font-bold text-stone-900">
-            {sort === "popular" ? "🔥 인기 모임" : sort === "new" ? "✨ 새로 생긴 모임" : "활동이 활발한 모임"}
+            {regionFilter ? `📍 ${regionFilter} 모임` :
+              sort === "popular" ? "🔥 인기 모임" :
+              sort === "new" ? "✨ 새로 생긴 모임" : "활동이 활발한 모임"}
           </h2>
           <span className="text-xs text-stone-500">총 {groups.length}개</span>
         </div>
@@ -91,7 +114,6 @@ export default async function Home({
         {error && (
           <div className="mx-4 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
             데이터를 불러오지 못했습니다. Supabase 연결을 확인해 주세요.
-            <br /><span className="text-xs">({error.message})</span>
           </div>
         )}
 
@@ -99,7 +121,8 @@ export default async function Home({
           <div className="mx-4 mt-2 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-10 text-center">
             <div className="text-4xl">🌿</div>
             <p className="mt-3 text-sm text-stone-600">
-              아직 모임이 없어요.<br />첫 모임을 만들어 보세요.
+              {regionFilter ? `${regionFilter}에 아직 모임이 없어요.` : "아직 모임이 없어요."}
+              <br />첫 모임을 만들어 보세요.
             </p>
             <Link href="/groups/new"
               className="mt-5 inline-block rounded-full bg-amber-700 px-5 py-2 text-sm font-medium text-white">
@@ -120,5 +143,25 @@ export default async function Home({
         <div className="h-6" />
       </section>
     </>
+  );
+}
+
+function RegionChip({ label, value, current, sort }: {
+  label: string; value: string; current: string; sort: string;
+}) {
+  const active = current === value;
+  const params = new URLSearchParams();
+  if (value) params.set("region", value);
+  if (sort !== "discover") params.set("sort", sort);
+  const href = `/${params.toString() ? `?${params}` : ""}`;
+  return (
+    <Link href={href}
+      className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition ${
+        active
+          ? "border-amber-700 bg-amber-700 text-white"
+          : "border-stone-200 bg-white text-stone-600 hover:border-stone-300"
+      }`}>
+      {label}
+    </Link>
   );
 }

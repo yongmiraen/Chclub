@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { CATEGORIES } from "@/lib/categories";
+import { REGION_GROUPS } from "@/lib/regions";
 import type { ActionResult } from "@/lib/actions";
 
 type Props = {
@@ -46,16 +47,34 @@ export default function GroupForm({ action, mode, defaults = {}, submitLabel, hi
         </div>
       </Field>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="지역" hint="선택">
-          <input name="region" maxLength={30} defaultValue={defaults.region ?? ""}
-            placeholder="예) 서울 마포구" className="input" />
-        </Field>
-        <Field label="정원" hint="2~200명">
-          <input name="max_members" type="number" required min={2} max={200}
-            defaultValue={defaults.max_members ?? 10} className="input" />
-        </Field>
-      </div>
+      <Field label="지역" hint="선택 안 하면 전체 공개">
+        <div className="space-y-2">
+          {REGION_GROUPS.map((g) => (
+            <div key={g.label}>
+              <div className="mb-1 text-xs font-medium text-stone-500">{g.label}</div>
+              <div className="flex flex-wrap gap-2">
+                {g.regions.map((r) => (
+                  <label key={r}
+                    className="cursor-pointer rounded-full border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 has-checked:border-amber-700 has-checked:bg-amber-700 has-checked:text-white">
+                    <input type="radio" name="region" value={r}
+                      defaultChecked={defaults.region === r} className="sr-only" />
+                    {r}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+          <label className="cursor-pointer rounded-full border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 has-checked:border-stone-500 has-checked:bg-stone-100">
+            <input type="radio" name="region" value="" defaultChecked={!defaults.region} className="sr-only" />
+            전체 (지역 무관)
+          </label>
+        </div>
+      </Field>
+
+      <Field label="정원" hint="2~200명">
+        <input name="max_members" type="number" required min={2} max={200}
+          defaultValue={defaults.max_members ?? 10} className="input" />
+      </Field>
 
       <Field label="소개글" hint="취지·진행 방식·요일 등">
         <textarea name="description" rows={6} maxLength={2000}
