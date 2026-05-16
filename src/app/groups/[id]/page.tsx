@@ -23,7 +23,7 @@ export default async function GroupDetailPage({
   const { created, updated } = await searchParams;
   const supabase = await createClient();
 
-  const [{ data: group, error: groupError }, { data: members }] = await Promise.all([
+  const [{ data: group, error: groupError }, { data: members }, { data: { user } }] = await Promise.all([
     supabase.from("groups").select("*").eq("id", id).single<Group>(),
     supabase
       .from("memberships")
@@ -31,6 +31,7 @@ export default async function GroupDetailPage({
       .eq("group_id", id)
       .order("created_at", { ascending: true })
       .returns<Membership[]>(),
+    supabase.auth.getUser(),
   ]);
 
   if (groupError || !group) notFound();
@@ -39,6 +40,7 @@ export default async function GroupDetailPage({
   const full = memberCount >= group.max_members;
   const tone = toneFor(group.category);
   const isPrayer = group.category === "prayer";
+  const userName = user?.user_metadata?.name || user?.user_metadata?.full_name || undefined;
 
   return (
     <>
@@ -141,7 +143,7 @@ export default async function GroupDetailPage({
         </div>
       </div>
 
-      <JoinPanel groupId={group.id} full={full} />
+      <JoinPanel groupId={group.id} full={full} userName={userName} />
     </>
   );
 }
