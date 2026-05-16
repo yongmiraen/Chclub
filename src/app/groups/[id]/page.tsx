@@ -64,8 +64,8 @@ export default async function GroupDetailPage({
         {(created || updated) && (
           <div className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             {created
-              ? "모임이 만들어졌어요! 링크와 PIN을 잘 보관하세요."
-              : "변경 사항이 저장되었어요."}
+              ? "모임이 만들어졌어요! 링크와 PIN 번호를 따로 적어두세요."
+              : "변경 사항을 저장했어요."}
           </div>
         )}
 

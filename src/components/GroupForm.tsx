@@ -91,16 +91,16 @@ export default function GroupForm({
         </Field>
       </div>
 
-      <Field label="소개글" hint="모임 취지·진행 방식·요일 등">
+      <Field label="소개글" hint="취지·진행 방식·요일 등">
         <textarea
           name="description"
           rows={6}
           maxLength={2000}
           defaultValue={defaults.description ?? ""}
           placeholder={`예)
-- 매주 토요일 오전 9시
-- 마가복음 1장씩 읽고 나눔
-- 누구나 환영합니다`}
+- 매주 토요일 오전 9시에 만나요
+- 마가복음 1장씩 읽고 나눠요
+- 누구나 환영해요`}
           className="input"
         />
       </Field>
@@ -117,8 +117,8 @@ export default function GroupForm({
       )}
 
       <Field
-        label={mode === "create" ? "수정용 PIN 만들기" : "PIN 확인"}
-        hint="숫자 4자리 · 모임 수정·삭제 시 필요"
+        label={mode === "create" ? "나만 아는 PIN 번호" : "PIN 번호 확인"}
+        hint="숫자 4자리 · 수정·삭제할 때 써요"
       >
         <input
           name="edit_pin"
@@ -136,7 +136,7 @@ export default function GroupForm({
         disabled={pending}
         className="w-full rounded-full bg-amber-700 px-5 py-3 font-medium text-white shadow-sm transition hover:bg-amber-800 disabled:bg-stone-400"
       >
-        {pending ? "저장 중…" : submitLabel}
+        {pending ? "잠깐만요…" : submitLabel}
       </button>
 
       <style>{`

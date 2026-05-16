@@ -83,12 +83,12 @@ export default function JoinPanel({ groupId, full }: Props) {
   const cta = joined ? (
     <div className="flex items-center gap-3">
       <div className="flex-1 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        <strong>{joined.nickname}</strong> 으로 참여중 🙌
+        <strong>{joined.nickname}</strong> 으로 함께하고 있어요 🙌
       </div>
       <button
         type="button"
         onClick={() => {
-          if (!confirm("참여 표시를 해제할까요?")) return;
+          if (!confirm("참여 표시를 지울게요. 계속할까요?")) return;
           const next = readJoined();
           delete next[groupId];
           writeJoined(next);
@@ -103,7 +103,7 @@ export default function JoinPanel({ groupId, full }: Props) {
       disabled
       className="w-full rounded-xl bg-stone-200 px-4 py-3.5 text-sm font-medium text-stone-500"
     >
-      정원이 가득 찼어요
+      지금은 자리가 없어요
     </button>
   ) : (
     <button
@@ -130,9 +130,9 @@ export default function JoinPanel({ groupId, full }: Props) {
         >
           <div className="w-full max-w-[480px] rounded-t-2xl bg-white p-5 pb-[max(env(safe-area-inset-bottom),20px)] shadow-2xl">
             <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-stone-300" />
-            <h3 className="text-lg font-bold text-stone-900">참여 신청</h3>
+            <h3 className="text-lg font-bold text-stone-900">같이 해요</h3>
             <p className="mt-1 text-xs text-stone-500">
-              방장이 연락할 수 있도록 닉네임을 남겨 주세요.
+              닉네임을 남기면 방장이 연락할 수 있어요.
             </p>
 
             {state && !state.ok && (
@@ -163,7 +163,7 @@ export default function JoinPanel({ groupId, full }: Props) {
                 name="message"
                 rows={3}
                 maxLength={500}
-                placeholder="방장에게 한마디 (선택)"
+                placeholder="방장에게 한마디 남겨요 (선택)"
                 className="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm leading-6 focus:border-amber-500 focus:outline-none"
               />
               <div className="flex gap-2 pt-1">
@@ -172,14 +172,14 @@ export default function JoinPanel({ groupId, full }: Props) {
                   onClick={() => setOpen(false)}
                   className="flex-1 rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-700"
                 >
-                  취소
+                  닫기
                 </button>
                 <button
                   type="submit"
                   disabled={pending}
                   className="flex-[2] rounded-xl bg-amber-700 px-4 py-3 text-sm font-semibold text-white active:bg-amber-800 disabled:bg-stone-400"
                 >
-                  {pending ? "신청 중…" : "함께 하기"}
+                  {pending ? "잠깐만요…" : "신청해요"}
                 </button>
               </div>
             </form>

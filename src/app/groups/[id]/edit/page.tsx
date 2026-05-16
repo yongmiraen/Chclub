@@ -29,7 +29,7 @@ export default async function EditGroupPage({
       <TopBar title="모임 수정" back={`/groups/${group.id}`} />
       <div className="px-5 py-5">
         <p className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-xs leading-5 text-stone-600">
-          모임을 만들 때 정한 PIN 4자리를 입력해야 저장됩니다.
+          만들 때 정한 PIN 번호를 입력하면 저장할 수 있어요.
         </p>
         <div className="mt-5">
           <GroupForm
@@ -42,7 +42,7 @@ export default async function EditGroupPage({
               region: group.region ?? "",
               max_members: group.max_members,
             }}
-            submitLabel="변경 사항 저장"
+            submitLabel="저장해요"
           />
         </div>
         <div className="mt-6">
