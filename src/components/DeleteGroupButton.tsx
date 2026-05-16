@@ -6,10 +6,7 @@ import type { ActionResult } from "@/lib/actions";
 
 export default function DeleteGroupButton({ groupId }: { groupId: string }) {
   const boundAction = deleteGroup.bind(null, groupId);
-  const [state, formAction, pending] = useActionState<
-    ActionResult | null,
-    FormData
-  >(boundAction, null);
+  const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(boundAction, null);
 
   return (
     <form
@@ -19,14 +16,14 @@ export default function DeleteGroupButton({ groupId }: { groupId: string }) {
           e.preventDefault();
         }
       }}
-      className="space-y-2 rounded-xl border border-rose-200 bg-rose-50 p-4"
+      className="space-y-2 rounded-xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-700/50 dark:bg-rose-900/20"
     >
-      <p className="text-sm font-medium text-rose-900">모임 삭제</p>
-      <p className="text-xs text-rose-800">
+      <p className="text-sm font-medium text-rose-900 dark:text-rose-300">모임 삭제</p>
+      <p className="text-xs text-rose-800 dark:text-rose-400">
         PIN 4자리를 입력하면 모임과 참여 기록이 모두 사라져요.
       </p>
       {state && !state.ok && (
-        <p className="text-xs text-rose-700">{state.error}</p>
+        <p className="text-xs text-rose-700 dark:text-rose-400">{state.error}</p>
       )}
       <div className="flex gap-2">
         <input
@@ -36,12 +33,12 @@ export default function DeleteGroupButton({ groupId }: { groupId: string }) {
           pattern="\d{4}"
           maxLength={4}
           placeholder="PIN"
-          className="w-24 rounded-lg border border-rose-300 bg-white px-3 py-2 text-sm tracking-widest focus:border-rose-500 focus:outline-none"
+          className="w-24 rounded-lg border border-rose-300 bg-white px-3 py-2 text-sm tracking-widest focus:border-rose-500 focus:outline-none dark:border-rose-700/50 dark:bg-stone-800 dark:text-stone-100"
         />
         <button
           type="submit"
           disabled={pending}
-          className="rounded-full bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-800 disabled:bg-stone-400"
+          className="rounded-full bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-800 disabled:bg-stone-400 dark:bg-rose-800 dark:hover:bg-rose-700"
         >
           {pending ? "잠깐만요…" : "삭제해요"}
         </button>

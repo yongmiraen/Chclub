@@ -62,7 +62,7 @@ export default async function GroupDetailPage({
 
       <div className="flex flex-1 flex-col">
         {(created || updated) && (
-          <div className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <div className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-700/50 dark:bg-amber-900/30 dark:text-amber-200">
             {created
               ? "모임이 만들어졌어요! 링크와 PIN 번호를 따로 적어두세요."
               : "변경 사항을 저장했어요."}
@@ -71,7 +71,7 @@ export default async function GroupDetailPage({
 
         {/* 히어로 배너 */}
         <section
-          className={`relative grid h-44 place-items-center ${tone.bg}`}
+          className={`relative grid h-44 place-items-center ${tone.bg} ${tone.darkBg}`}
         >
           <div className="text-6xl drop-shadow-sm">
             {categoryEmoji(group.category)}
@@ -86,7 +86,7 @@ export default async function GroupDetailPage({
             {full && <Chip tone="rose">마감</Chip>}
           </div>
 
-          <h1 className="mt-3 text-xl font-bold leading-snug text-stone-900">
+          <h1 className="mt-3 text-xl font-bold leading-snug text-stone-900 dark:text-stone-100">
             {group.title}
           </h1>
 
@@ -102,7 +102,7 @@ export default async function GroupDetailPage({
             </span>
           </div>
 
-          <p className="mt-5 whitespace-pre-wrap text-[15px] leading-7 text-stone-700">
+          <p className="mt-5 whitespace-pre-wrap text-[15px] leading-7 text-stone-700 dark:text-stone-300">
             {group.description}
           </p>
 
@@ -113,24 +113,24 @@ export default async function GroupDetailPage({
 
         <section className="mt-5 px-5">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-base font-bold text-stone-900">
+            <h2 className="text-base font-bold text-stone-900 dark:text-stone-100">
               {isPrayer ? "🙏 함께 기도해요" : `참여 멤버 (${memberCount})`}
             </h2>
           </div>
 
           <div className="mt-3 space-y-2">
             {memberCount === 0 && (
-              <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-6 text-center text-sm text-stone-500">
+              <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-6 text-center text-sm text-stone-500 dark:border-stone-600 dark:bg-stone-800/50 dark:text-stone-400">
                 첫 번째로 함께해 보세요.
               </div>
             )}
             {members?.map((m) => (
               <div
                 key={m.id}
-                className="rounded-xl border border-stone-200 bg-white p-3.5"
+                className="rounded-xl border border-stone-200 bg-white p-3.5 dark:border-stone-700 dark:bg-stone-800"
               >
                 <div className="flex items-center justify-between">
-                  <strong className="text-sm text-stone-900">
+                  <strong className="text-sm text-stone-900 dark:text-stone-100">
                     {m.nickname}
                   </strong>
                   <span className="text-[11px] text-stone-400">
@@ -138,7 +138,7 @@ export default async function GroupDetailPage({
                   </span>
                 </div>
                 {m.message && (
-                  <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-stone-700">
+                  <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-stone-700 dark:text-stone-300">
                     {m.message}
                   </p>
                 )}
@@ -176,8 +176,8 @@ function Chip({
 }) {
   const cls =
     tone === "rose"
-      ? "bg-rose-100 text-rose-800"
-      : "bg-stone-100 text-stone-700";
+      ? "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300"
+      : "bg-stone-100 text-stone-700 dark:bg-stone-700 dark:text-stone-300";
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${cls}`}

@@ -51,6 +51,9 @@ function useJoinedRecord(groupId: string) {
   );
 }
 
+const inputCls =
+  "w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 focus:border-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:focus:border-amber-500";
+
 export default function JoinPanel({ groupId, full }: Props) {
   const boundAction = joinGroup.bind(null, groupId);
   const [state, formAction, pending] = useActionState<
@@ -82,7 +85,7 @@ export default function JoinPanel({ groupId, full }: Props) {
 
   const cta = joined ? (
     <div className="flex items-center gap-3">
-      <div className="flex-1 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <div className="flex-1 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700/50 dark:bg-amber-900/30 dark:text-amber-200">
         <strong>{joined.nickname}</strong> 으로 함께하고 있어요 🙌
       </div>
       <button
@@ -93,7 +96,7 @@ export default function JoinPanel({ groupId, full }: Props) {
           delete next[groupId];
           writeJoined(next);
         }}
-        className="rounded-xl border border-stone-200 px-3 py-3 text-xs text-stone-600 active:bg-stone-100"
+        className="rounded-xl border border-stone-200 px-3 py-3 text-xs text-stone-600 active:bg-stone-100 dark:border-stone-700 dark:text-stone-400 dark:active:bg-stone-800"
       >
         해제
       </button>
@@ -101,7 +104,7 @@ export default function JoinPanel({ groupId, full }: Props) {
   ) : full ? (
     <button
       disabled
-      className="w-full rounded-xl bg-stone-200 px-4 py-3.5 text-sm font-medium text-stone-500"
+      className="w-full rounded-xl bg-stone-200 px-4 py-3.5 text-sm font-medium text-stone-500 dark:bg-stone-700 dark:text-stone-400"
     >
       지금은 자리가 없어요
     </button>
@@ -109,7 +112,7 @@ export default function JoinPanel({ groupId, full }: Props) {
     <button
       type="button"
       onClick={() => setOpen(true)}
-      className="w-full rounded-xl bg-amber-700 px-4 py-3.5 text-base font-semibold text-white shadow-sm active:bg-amber-800"
+      className="w-full rounded-xl bg-amber-700 px-4 py-3.5 text-base font-semibold text-white shadow-sm active:bg-amber-800 dark:bg-amber-600 dark:active:bg-amber-700"
     >
       가입하기
     </button>
@@ -117,67 +120,46 @@ export default function JoinPanel({ groupId, full }: Props) {
 
   return (
     <>
-      <div className="sticky bottom-0 z-10 border-t border-stone-100 bg-white/95 px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)] backdrop-blur">
+      <div className="sticky bottom-0 z-10 border-t border-stone-100 bg-white/95 px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)] backdrop-blur dark:border-stone-700 dark:bg-stone-900/95">
         {cta}
       </div>
 
       {open && (
         <div
-          className="fixed inset-0 z-40 flex items-end justify-center bg-black/40"
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/50"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="w-full max-w-[480px] rounded-t-2xl bg-white p-5 pb-[max(env(safe-area-inset-bottom),20px)] shadow-2xl">
-            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-stone-300" />
-            <h3 className="text-lg font-bold text-stone-900">같이 해요</h3>
-            <p className="mt-1 text-xs text-stone-500">
+          <div className="w-full max-w-[430px] rounded-t-2xl bg-white p-5 pb-[max(env(safe-area-inset-bottom),20px)] shadow-2xl dark:bg-stone-900">
+            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-stone-300 dark:bg-stone-600" />
+            <h3 className="text-lg font-bold text-stone-900 dark:text-stone-100">같이 해요</h3>
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
               닉네임을 남기면 방장이 연락할 수 있어요.
             </p>
 
             {state && !state.ok && (
-              <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+              <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-700/50 dark:bg-rose-900/30 dark:text-rose-300">
                 {state.error}
               </div>
             )}
 
-            <form
-              action={formAction}
-              onSubmit={handleSubmit}
-              className="mt-4 space-y-3"
-            >
-              <input
-                name="nickname"
-                required
-                maxLength={20}
-                placeholder="닉네임"
-                className="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm focus:border-amber-500 focus:outline-none"
-              />
-              <input
-                name="contact"
-                maxLength={100}
-                placeholder="연락처 (선택, 카톡ID·전화 등)"
-                className="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm focus:border-amber-500 focus:outline-none"
-              />
-              <textarea
-                name="message"
-                rows={3}
-                maxLength={500}
-                placeholder="방장에게 한마디 남겨요 (선택)"
-                className="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm leading-6 focus:border-amber-500 focus:outline-none"
-              />
+            <form action={formAction} onSubmit={handleSubmit} className="mt-4 space-y-3">
+              <input name="nickname" required maxLength={20} placeholder="닉네임" className={inputCls} />
+              <input name="contact" maxLength={100} placeholder="연락처 (선택, 카톡ID·전화 등)" className={inputCls} />
+              <textarea name="message" rows={3} maxLength={500} placeholder="방장에게 한마디 남겨요 (선택)" className={`${inputCls} leading-6`} />
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="flex-1 rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-700"
+                  className="flex-1 rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-700 dark:border-stone-600 dark:text-stone-300"
                 >
                   닫기
                 </button>
                 <button
                   type="submit"
                   disabled={pending}
-                  className="flex-[2] rounded-xl bg-amber-700 px-4 py-3 text-sm font-semibold text-white active:bg-amber-800 disabled:bg-stone-400"
+                  className="flex-[2] rounded-xl bg-amber-700 px-4 py-3 text-sm font-semibold text-white active:bg-amber-800 disabled:bg-stone-400 dark:bg-amber-600"
                 >
                   {pending ? "잠깐만요…" : "신청해요"}
                 </button>

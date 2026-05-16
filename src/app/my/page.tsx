@@ -71,7 +71,7 @@ export default function MyPage() {
     <>
       <TopBar title="내모임" />
       {loading ? (
-        <div className="px-4 py-10 text-center text-sm text-stone-500">
+        <div className="px-4 py-10 text-center text-sm text-stone-500 dark:text-stone-400">
           불러오는 중…
         </div>
       ) : joined.length === 0 && created.length === 0 ? (
@@ -118,32 +118,28 @@ function Block({
 }) {
   return (
     <section className="mt-2">
-      <h2 className="px-4 pb-1 pt-4 text-xs font-medium text-stone-500">
+      <h2 className="px-4 pb-1 pt-4 text-xs font-medium text-stone-500 dark:text-stone-400">
         {label}
       </h2>
-      <div className="border-t border-stone-100">{children}</div>
+      <div className="border-t border-stone-100 dark:border-stone-700">{children}</div>
     </section>
   );
 }
 
 function Empty() {
   return (
-    <div className="mx-4 mt-6 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-10 text-center">
+    <div className="mx-4 mt-6 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-10 text-center dark:border-stone-600 dark:bg-stone-800/50">
       <div className="text-4xl">🌱</div>
-      <p className="mt-3 text-sm text-stone-600">
+      <p className="mt-3 text-sm text-stone-600 dark:text-stone-400">
         아직 만들거나 참여한 모임이 없어요.
       </p>
       <div className="mt-4 flex justify-center gap-2">
-        <Link
-          href="/"
-          className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-700"
-        >
+        <Link href="/"
+          className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300">
           모임 둘러보기
         </Link>
-        <Link
-          href="/groups/new"
-          className="rounded-full bg-amber-700 px-4 py-2 text-sm font-medium text-white"
-        >
+        <Link href="/groups/new"
+          className="rounded-full bg-amber-700 px-4 py-2 text-sm font-medium text-white dark:bg-amber-600">
           + 만들기
         </Link>
       </div>

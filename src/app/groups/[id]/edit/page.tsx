@@ -28,7 +28,7 @@ export default async function EditGroupPage({
     <>
       <TopBar title="모임 수정" back={`/groups/${group.id}`} />
       <div className="px-5 py-5">
-        <p className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-xs leading-5 text-stone-600">
+        <p className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-xs leading-5 text-stone-600 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-400">
           만들 때 정한 PIN 번호를 입력하면 저장할 수 있어요.
         </p>
         <div className="mt-5">
