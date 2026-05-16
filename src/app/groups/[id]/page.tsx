@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
 import { categoryLabel, categoryEmoji } from "@/lib/categories";
 import { toneFor } from "@/lib/theme";
 import TopBar, { IconButton } from "@/components/TopBar";
@@ -21,6 +21,7 @@ export default async function GroupDetailPage({
 }) {
   const { id } = await params;
   const { created, updated } = await searchParams;
+  const supabase = await createClient();
 
   const [{ data: group, error: groupError }, { data: members }] = await Promise.all([
     supabase.from("groups").select("*").eq("id", id).single<Group>(),

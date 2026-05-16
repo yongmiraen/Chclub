@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
 import { CATEGORIES } from "@/lib/categories";
 import CategoryIcon from "@/components/CategoryIcon";
 import GroupListItem from "@/components/GroupListItem";
@@ -25,6 +25,7 @@ export default async function Home({
   const sp = await searchParams;
   const sort: SortKey = sp.sort === "popular" || sp.sort === "new" ? sp.sort : "discover";
 
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("groups")
     .select("*, memberships(count)")

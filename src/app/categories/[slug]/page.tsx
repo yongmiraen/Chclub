@@ -4,7 +4,7 @@ import TopBar from "@/components/TopBar";
 import GroupListItem from "@/components/GroupListItem";
 import { CATEGORY_MAP } from "@/lib/categories";
 import { toneFor } from "@/lib/theme";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
 import type { Group, GroupWithCount } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +17,7 @@ export default async function CategoryDetail({ params }: { params: Promise<{ slu
   if (!cat) notFound();
   const tone = toneFor(slug);
 
+  const supabase = await createClient();
   const { data } = await supabase
     .from("groups").select("*, memberships(count)")
     .eq("category", slug).order("created_at", { ascending: false })

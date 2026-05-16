@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import TopBar from "@/components/TopBar";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
 import { updateGroup } from "@/lib/actions";
 import GroupForm from "@/components/GroupForm";
 import DeleteGroupButton from "@/components/DeleteGroupButton";
@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EditGroupPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const supabase = await createClient();
   const { data: group } = await supabase
     .from("groups").select("*").eq("id", id).single<Group>();
 
