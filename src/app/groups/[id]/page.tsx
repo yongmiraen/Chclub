@@ -41,6 +41,8 @@ export default async function GroupDetailPage({
   const tone = toneFor(group.category);
   const isPrayer = group.category === "prayer";
   const userName = user?.user_metadata?.name || user?.user_metadata?.full_name || undefined;
+  const groupWithOwner = group as Group & { owner_id?: string };
+  const isOwner = user && groupWithOwner.owner_id === user.id;
 
   return (
     <>
@@ -86,6 +88,11 @@ export default async function GroupDetailPage({
           <h1 className="mt-3 text-xl font-bold leading-snug text-stone-900">
             {group.title}
           </h1>
+          {isOwner && (
+            <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+              👑 내가 만든 모임
+            </span>
+          )}
 
           <div className="mt-2 flex items-center gap-3 text-xs text-stone-500">
             <span>방장 · {group.creator_nickname}</span>
@@ -135,15 +142,26 @@ export default async function GroupDetailPage({
           </div>
         </section>
 
-        <div className="px-5 pb-5 pt-6">
-          <Link href={`/groups/${group.id}/edit`}
-            className="block text-center text-xs text-stone-400 hover:text-stone-600">
-            방장만 · 수정 / 삭제
-          </Link>
-        </div>
+        {isOwner && (
+          <div className="mx-5 mb-5 mt-4 flex gap-2">
+            <Link href={`/groups/${group.id}/edit`}
+              className="flex-1 rounded-xl border border-stone-200 bg-stone-50 py-2.5 text-center text-sm font-medium text-stone-700 active:bg-stone-100">
+              ✏️ 수정 / 삭제
+            </Link>
+          </div>
+        )}
+        {!isOwner && (
+          <div className="px-5 pb-5 pt-2">
+            <Link href={`/groups/${group.id}/edit`}
+              className="block text-center text-xs text-stone-400 hover:text-stone-600">
+              방장이라면 · 수정 / 삭제
+            </Link>
+          </div>
+        )}
       </div>
 
-      <JoinPanel groupId={group.id} full={full} userName={userName} />
+      {/* 방장은 가입하기 버튼 숨김 */}
+      {!isOwner && <JoinPanel groupId={group.id} full={full} userName={userName} />}
     </>
   );
 }

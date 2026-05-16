@@ -1,107 +1,101 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase-server";
 import TopBar from "@/components/TopBar";
 import GroupListItem from "@/components/GroupListItem";
-import { supabase } from "@/lib/supabase";
 import type { Group, GroupWithCount } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+export const metadata = { title: "내모임 · 크로소" };
+
 type Row = Group & { memberships: { count: number }[] };
-type LocalEntry = { nickname?: string; title?: string };
 
-function readLocal(key: string): Record<string, LocalEntry> {
-  if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(key) || "{}"); }
-  catch { return {}; }
-}
+export default async function MyPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-export default function MyPage() {
-  const [joined, setJoined] = useState<GroupWithCount[]>([]);
-  const [created, setCreated] = useState<GroupWithCount[]>([]);
-  const [loading, setLoading] = useState(true);
+  if (!user) redirect("/login?next=/my");
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const joinedMap = readLocal("kroso:joined");
-      const createdMap = readLocal("kroso:created");
-      const joinedIds = Object.keys(joinedMap);
-      const createdIds = Object.keys(createdMap);
-      const allIds = Array.from(new Set([...joinedIds, ...createdIds]));
+  // 내가 만든 모임
+  const { data: createdRows } = await supabase
+    .from("groups")
+    .select("*, memberships(count)")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: false })
+    .returns<Row[]>();
 
-      let byId = new Map<string, GroupWithCount>();
-      if (allIds.length > 0) {
-        const { data } = await supabase
-          .from("groups").select("*, memberships(count)")
-          .in("id", allIds).returns<Row[]>();
-        const enriched: GroupWithCount[] =
-          data?.map((g) => ({ ...g, member_count: g.memberships?.[0]?.count ?? 0 })) ?? [];
-        byId = new Map(enriched.map((g) => [g.id, g]));
-      }
+  // 내가 가입한 모임 (memberships.user_id 기준)
+  const { data: memberRows } = await supabase
+    .from("memberships")
+    .select("group_id")
+    .eq("user_id", user.id);
 
-      if (cancelled) return;
-      setJoined(joinedIds.map((id) => byId.get(id)).filter((g): g is GroupWithCount => Boolean(g)));
-      setCreated(createdIds.map((id) => byId.get(id)).filter((g): g is GroupWithCount => Boolean(g)));
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  const joinedGroupIds = memberRows?.map((m) => m.group_id) ?? [];
+
+  let joinedGroups: GroupWithCount[] = [];
+  if (joinedGroupIds.length > 0) {
+    const { data: joinedRows } = await supabase
+      .from("groups")
+      .select("*, memberships(count)")
+      .in("id", joinedGroupIds)
+      .returns<Row[]>();
+    joinedGroups =
+      joinedRows?.map((g) => ({ ...g, member_count: g.memberships?.[0]?.count ?? 0 })) ?? [];
+  }
+
+  const createdGroups: GroupWithCount[] =
+    createdRows?.map((g) => ({ ...g, member_count: g.memberships?.[0]?.count ?? 0 })) ?? [];
+
+  const name = user.user_metadata?.name || user.user_metadata?.full_name || "회원";
 
   return (
     <>
-      <TopBar title="내모임" />
-      {loading ? (
-        <div className="px-4 py-10 text-center text-sm text-stone-500">불러오는 중…</div>
-      ) : joined.length === 0 && created.length === 0 ? (
-        <Empty />
+      <TopBar title="내모임" subtitle={name} />
+      {createdGroups.length === 0 && joinedGroups.length === 0 ? (
+        <div className="mx-4 mt-6 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-10 text-center">
+          <div className="text-4xl">🌱</div>
+          <p className="mt-3 text-sm text-stone-600">
+            아직 만들거나 참여한 모임이 없어요.
+          </p>
+          <div className="mt-4 flex justify-center gap-2">
+            <Link href="/"
+              className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-700">
+              모임 둘러보기
+            </Link>
+            <Link href="/groups/new"
+              className="rounded-full bg-amber-700 px-4 py-2 text-sm font-medium text-white">
+              + 만들기
+            </Link>
+          </div>
+        </div>
       ) : (
         <>
-          {created.length > 0 && (
-            <Block label={`내가 만든 모임 · ${created.length}`}>
-              {created.map((g, i) => (
-                <GroupListItem key={g.id} group={g} hideDivider={i === created.length - 1} />
+          {createdGroups.length > 0 && (
+            <Section label={`내가 만든 모임 · ${createdGroups.length}`}>
+              {createdGroups.map((g, i) => (
+                <GroupListItem key={g.id} group={g} hideDivider={i === createdGroups.length - 1} />
               ))}
-            </Block>
+            </Section>
           )}
-          {joined.length > 0 && (
-            <Block label={`참여한 모임 · ${joined.length}`}>
-              {joined.map((g, i) => (
-                <GroupListItem key={g.id} group={g} hideDivider={i === joined.length - 1} />
+          {joinedGroups.length > 0 && (
+            <Section label={`참여한 모임 · ${joinedGroups.length}`}>
+              {joinedGroups.map((g, i) => (
+                <GroupListItem key={g.id} group={g} hideDivider={i === joinedGroups.length - 1} />
               ))}
-            </Block>
+            </Section>
           )}
         </>
       )}
-      <p className="px-4 pb-6 pt-2 text-center text-[11px] text-stone-400">
-        로그인이 없는 데모라서 모임 기록은 이 브라우저에만 저장돼요.
-      </p>
+      <div className="h-6" />
     </>
   );
 }
 
-function Block({ label, children }: { label: string; children: React.ReactNode }) {
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <section className="mt-2">
       <h2 className="px-4 pb-1 pt-4 text-xs font-medium text-stone-500">{label}</h2>
       <div className="border-t border-stone-100">{children}</div>
     </section>
-  );
-}
-
-function Empty() {
-  return (
-    <div className="mx-4 mt-6 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-10 text-center">
-      <div className="text-4xl">🌱</div>
-      <p className="mt-3 text-sm text-stone-600">아직 만들거나 참여한 모임이 없어요.</p>
-      <div className="mt-4 flex justify-center gap-2">
-        <Link href="/" className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-700">
-          모임 둘러보기
-        </Link>
-        <Link href="/groups/new" className="rounded-full bg-amber-700 px-4 py-2 text-sm font-medium text-white">
-          + 만들기
-        </Link>
-      </div>
-    </div>
   );
 }
