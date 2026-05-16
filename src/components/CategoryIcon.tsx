@@ -15,12 +15,7 @@ const sizeCls = {
   lg: { circle: "h-20 w-20 text-3xl", label: "text-sm" },
 };
 
-export default function CategoryIcon({
-  slug,
-  size = "md",
-  href,
-  label = true,
-}: Props) {
+export default function CategoryIcon({ slug, size = "md", href, label = true }: Props) {
   const cat = CATEGORY_MAP[slug];
   if (!cat) return null;
   const tone = toneFor(slug);
@@ -28,14 +23,10 @@ export default function CategoryIcon({
 
   const inner = (
     <div className="flex flex-col items-center gap-1.5">
-      <div
-        className={`grid place-items-center rounded-full ${tone.bg} ${tone.darkBg} ${s.circle} ring-1 ${tone.ring} ${tone.darkRing}`}
-      >
+      <div className={`grid place-items-center rounded-full ${tone.bg} ${s.circle} ring-1 ${tone.ring}`}>
         <span aria-hidden>{cat.emoji}</span>
       </div>
-      {label && (
-        <span className={`${s.label} text-stone-700`}>{cat.label}</span>
-      )}
+      {label && <span className={`${s.label} text-stone-700`}>{cat.label}</span>}
     </div>
   );
 

@@ -28,12 +28,12 @@ export default async function CategoryDetail({ params }: { params: Promise<{ slu
   return (
     <>
       <TopBar title={cat.label} back="/categories" />
-      <section className={`${tone.bg} ${tone.darkBg} px-5 py-6`}>
+      <section className={`${tone.bg} px-5 py-6`}>
         <div className="flex items-center gap-3">
           <span className="text-3xl">{cat.emoji}</span>
           <div>
-            <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">{cat.label}</h2>
-            <p className="text-xs text-stone-700/80 dark:text-stone-300/80">
+            <h2 className="text-lg font-bold text-stone-900">{cat.label}</h2>
+            <p className="text-xs text-stone-700/80">
               {cat.group === "신앙" ? "함께 신앙을 키워가요" : "함께 즐기며 친해져요"}
               {" · "}{groups.length}개 모임
             </p>
@@ -42,21 +42,19 @@ export default async function CategoryDetail({ params }: { params: Promise<{ slu
       </section>
 
       {groups.length === 0 ? (
-        <div className="mx-4 mt-6 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-10 text-center dark:border-stone-600 dark:bg-stone-800/50">
-          <p className="text-sm text-stone-600 dark:text-stone-400">
+        <div className="mx-4 mt-6 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-10 text-center">
+          <p className="text-sm text-stone-600">
             아직 {cat.label} 모임이 없어요.<br />첫 모임을 만들어 보세요.
           </p>
           <Link href="/groups/new"
-            className="mt-4 inline-block rounded-full bg-amber-700 px-5 py-2 text-sm font-medium text-white dark:bg-amber-600">
+            className="mt-4 inline-block rounded-full bg-amber-700 px-5 py-2 text-sm font-medium text-white">
             + 모임 만들기
           </Link>
         </div>
       ) : (
         <ul>
           {groups.map((g, i) => (
-            <li key={g.id}>
-              <GroupListItem group={g} hideDivider={i === groups.length - 1} />
-            </li>
+            <li key={g.id}><GroupListItem group={g} hideDivider={i === groups.length - 1} /></li>
           ))}
         </ul>
       )}

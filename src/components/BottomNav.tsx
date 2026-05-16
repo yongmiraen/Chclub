@@ -36,7 +36,7 @@ const items: Item[] = [
     label: "만들기",
     match: (p) => p.startsWith("/groups/new"),
     icon: (
-      <span className="grid h-9 w-9 place-items-center rounded-full bg-amber-700 text-white shadow-md dark:bg-amber-600">
+      <span className="grid h-9 w-9 place-items-center rounded-full bg-amber-700 text-white shadow-md">
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
           <path d="M12 5v14M5 12h14" />
         </svg>
@@ -59,7 +59,7 @@ const items: Item[] = [
 export default function BottomNav() {
   const pathname = usePathname() || "/";
   return (
-    <nav className="sticky bottom-0 z-30 border-t border-stone-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-stone-700 dark:bg-stone-900/95">
+    <nav className="sticky bottom-0 z-30 border-t border-stone-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
       <ul className="mx-auto grid max-w-[430px] grid-cols-4">
         {items.map((it) => {
           const active = it.match(pathname);
@@ -69,15 +69,11 @@ export default function BottomNav() {
               <Link
                 href={it.href}
                 className={`flex flex-col items-center justify-center gap-1 py-2 text-[11px] transition ${
-                  active && !isCenter
-                    ? "text-amber-700 dark:text-amber-500"
-                    : "text-stone-500 dark:text-stone-400"
+                  active && !isCenter ? "text-amber-700" : "text-stone-500"
                 }`}
               >
                 <span>{it.icon}</span>
-                <span className={isCenter ? "text-stone-700 dark:text-stone-300" : ""}>
-                  {it.label}
-                </span>
+                <span>{it.label}</span>
               </Link>
             </li>
           );

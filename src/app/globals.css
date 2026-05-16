@@ -1,64 +1,53 @@
 @import "tailwindcss";
 
-/* dark: 클래스 전략 — html.dark 가 붙으면 dark: 변형 활성화 */
-@variant dark (&:where(.dark, .dark *));
-
 @font-face {
     font-family: 'Pretendard';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Thin.woff2') format('woff2');
     font-weight: 100;
     font-display: swap;
 }
-
 @font-face {
     font-family: 'Pretendard';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraLight.woff2') format('woff2');
     font-weight: 200;
     font-display: swap;
 }
-
 @font-face {
     font-family: 'Pretendard';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Light.woff2') format('woff2');
     font-weight: 300;
     font-display: swap;
 }
-
 @font-face {
     font-family: 'Pretendard';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Regular.woff2') format('woff2');
     font-weight: 400;
     font-display: swap;
 }
-
 @font-face {
     font-family: 'Pretendard';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Medium.woff2') format('woff2');
     font-weight: 500;
     font-display: swap;
 }
-
 @font-face {
     font-family: 'Pretendard';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-SemiBold.woff2') format('woff2');
     font-weight: 600;
     font-display: swap;
 }
-
 @font-face {
     font-family: 'Pretendard';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Bold.woff2') format('woff2');
     font-weight: 700;
     font-display: swap;
 }
-
 @font-face {
     font-family: 'Pretendard';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraBold.woff2') format('woff2');
     font-weight: 800;
     font-display: swap;
 }
-
 @font-face {
     font-family: 'Pretendard';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Black.woff2') format('woff2');
@@ -70,21 +59,12 @@
   --background: #fafaf9;
   --foreground: #1c1917;
   --accent: #b45309;
-  --accent-soft: #fef3c7;
-}
-
-.dark {
-  --background: #1c1917;
-  --foreground: #f5f5f4;
-  --accent: #d97706;
-  --accent-soft: #451a03;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
   --font-sans: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 }
 
@@ -92,9 +72,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  /* 기준 해상도 최솟값: 360px (세로형 모바일 하한) */
   min-width: 360px;
-  /* 가로 스크롤 방지 */
   overflow-x: hidden;
 }
 
@@ -103,6 +81,3 @@ textarea,
 select {
   font-family: inherit;
 }
-
-/* Safe Area: bottom은 각 컴포넌트에서 env(safe-area-inset-bottom)으로 처리 */
-/* top/side는 브라우저가 자동 처리 (viewport-fit=cover 미사용) */

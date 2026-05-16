@@ -22,21 +22,20 @@ const initial: ActionResult | null = null;
 export default function GroupForm({ action, mode, defaults = {}, submitLabel }: Props) {
   const [state, formAction, pending] = useActionState(action, initial);
   const error = state && !state.ok ? state.error : null;
-
   const spiritual = CATEGORIES.filter((c) => c.group === "신앙");
   const hobby = CATEGORIES.filter((c) => c.group === "취미");
 
   return (
     <form action={formAction} className="space-y-5">
       {error && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-700/50 dark:bg-rose-900/30 dark:text-rose-300">
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
           {error}
         </div>
       )}
 
       <Field label="모임 이름" hint="2~60자">
-        <input name="title" required maxLength={60} minLength={2} defaultValue={defaults.title}
-          placeholder="예) 신촌 청년 큐티 모임" className="input" />
+        <input name="title" required maxLength={60} minLength={2}
+          defaultValue={defaults.title} placeholder="예) 신촌 청년 큐티 모임" className="input" />
       </Field>
 
       <Field label="카테고리">
@@ -58,7 +57,8 @@ export default function GroupForm({ action, mode, defaults = {}, submitLabel }: 
       </div>
 
       <Field label="소개글" hint="취지·진행 방식·요일 등">
-        <textarea name="description" rows={6} maxLength={2000} defaultValue={defaults.description ?? ""}
+        <textarea name="description" rows={6} maxLength={2000}
+          defaultValue={defaults.description ?? ""}
           placeholder={`예)\n- 매주 토요일 오전 9시에 만나요\n- 마가복음 1장씩 읽고 나눠요\n- 누구나 환영해요`}
           className="input" />
       </Field>
@@ -75,7 +75,7 @@ export default function GroupForm({ action, mode, defaults = {}, submitLabel }: 
       </Field>
 
       <button type="submit" disabled={pending}
-        className="w-full rounded-full bg-amber-700 px-5 py-3 font-medium text-white shadow-sm transition hover:bg-amber-800 disabled:bg-stone-400 dark:bg-amber-600 dark:hover:bg-amber-700">
+        className="w-full rounded-full bg-amber-700 px-5 py-3 font-medium text-white shadow-sm transition hover:bg-amber-800 disabled:bg-stone-400">
         {pending ? "잠깐만요…" : submitLabel}
       </button>
 
@@ -93,12 +93,6 @@ export default function GroupForm({ action, mode, defaults = {}, submitLabel }: 
         }
         .input:focus { border-color: #d97706; }
         textarea.input { line-height: 1.6; }
-        .dark .input {
-          background: #292524;
-          color: #f5f5f4;
-          border-color: #57534e;
-        }
-        .dark .input:focus { border-color: #d97706; }
       `}</style>
     </form>
   );
@@ -108,8 +102,8 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   return (
     <label className="block">
       <div className="mb-2 flex items-baseline justify-between">
-        <span className="text-sm font-medium text-stone-800 dark:text-stone-200">{label}</span>
-        {hint && <span className="text-xs text-stone-500 dark:text-stone-400">{hint}</span>}
+        <span className="text-sm font-medium text-stone-800">{label}</span>
+        {hint && <span className="text-xs text-stone-500">{hint}</span>}
       </div>
       {children}
     </label>
@@ -117,19 +111,19 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 function FieldsetGroup({ title, name, options, defaultValue }: {
-  title: string;
-  name: string;
+  title: string; name: string;
   options: { slug: string; label: string; emoji: string }[];
   defaultValue?: string;
 }) {
   return (
     <div>
-      <div className="mb-1 text-xs font-medium text-stone-500 dark:text-stone-400">{title}</div>
+      <div className="mb-1 text-xs font-medium text-stone-500">{title}</div>
       <div className="flex flex-wrap gap-2">
         {options.map((o) => (
           <label key={o.slug}
-            className="cursor-pointer rounded-full border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 has-checked:border-amber-700 has-checked:bg-amber-700 has-checked:text-white dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300 dark:has-checked:border-amber-600 dark:has-checked:bg-amber-600">
-            <input type="radio" name={name} value={o.slug} defaultChecked={defaultValue === o.slug} className="sr-only" required />
+            className="cursor-pointer rounded-full border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 has-checked:border-amber-700 has-checked:bg-amber-700 has-checked:text-white">
+            <input type="radio" name={name} value={o.slug}
+              defaultChecked={defaultValue === o.slug} className="sr-only" required />
             <span aria-hidden className="mr-1">{o.emoji}</span>
             {o.label}
           </label>

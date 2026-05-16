@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { supabase } from "./supabase";
+import { createClient as createServerClient } from "./supabase-server";
 import { hashPin, verifyPin } from "./pin";
 import { CATEGORY_MAP } from "./categories";
 
@@ -47,6 +48,10 @@ export async function createGroup(
   if (region.length > 30)
     return { ok: false, error: "지역은 30자 이내로 입력해 주세요." };
 
+  // 로그인한 사용자이면 owner_id 함께 저장
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+
   const { data, error } = await supabase
     .from("groups")
     .insert({
@@ -57,6 +62,7 @@ export async function createGroup(
       max_members: maxMembers,
       creator_nickname: creatorNickname,
       edit_pin_hash: hashPin(pin),
+      ...(user ? { owner_id: user.id } : {}),
     })
     .select("id")
     .single();
@@ -178,11 +184,15 @@ export async function joinGroup(
   if ((count ?? 0) >= group.max_members)
     return { ok: false, error: "정원이 가득 찼습니다." };
 
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+
   const { error } = await supabase.from("memberships").insert({
     group_id: groupId,
     nickname,
     contact: contact || null,
     message: message || null,
+    ...(user ? { user_id: user.id } : {}),
   });
 
   if (error) return { ok: false, error: error.message };
