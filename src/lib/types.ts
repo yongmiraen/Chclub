@@ -24,6 +24,7 @@ export type Membership = {
   message: string | null;
   created_at: string;
   status: "pending" | "approved";
+  role: "member" | "operator";
   user_id: string | null;
 };
 

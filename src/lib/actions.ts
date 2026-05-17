@@ -342,6 +342,16 @@ export async function leaveMembership(
   return { ok: true };
 }
 
+// 방장 또는 운영자인지 확인하는 헬퍼
+async function isManagerOf(userId: string, groupId: string) {
+  const { data: group } = await supabase
+    .from("groups").select("owner_id").eq("id", groupId).single();
+  if (group?.owner_id === userId) return true;
+  const { data: m } = await supabase.from("memberships")
+    .select("role").eq("group_id", groupId).eq("user_id", userId).eq("status", "approved").maybeSingle();
+  return m?.role === "operator";
+}
+
 export async function approveMember(
   membershipId: string,
   groupId: string,
@@ -350,10 +360,8 @@ export async function approveMember(
   const { data: { user } } = await authClient.auth.getUser();
   if (!user) return { ok: false, error: "로그인이 필요합니다." };
 
-  const { data: group } = await supabase
-    .from("groups").select("owner_id").eq("id", groupId).single();
-  if (group?.owner_id !== user.id)
-    return { ok: false, error: "방장만 수락할 수 있습니다." };
+  if (!(await isManagerOf(user.id, groupId)))
+    return { ok: false, error: "방장 또는 운영자만 수락할 수 있어요." };
 
   const { error } = await supabase
     .from("memberships").update({ status: "approved" }).eq("id", membershipId);
@@ -371,10 +379,8 @@ export async function rejectMember(
   const { data: { user } } = await authClient.auth.getUser();
   if (!user) return { ok: false, error: "로그인이 필요합니다." };
 
-  const { data: group } = await supabase
-    .from("groups").select("owner_id").eq("id", groupId).single();
-  if (group?.owner_id !== user.id)
-    return { ok: false, error: "방장만 거절할 수 있습니다." };
+  if (!(await isManagerOf(user.id, groupId)))
+    return { ok: false, error: "방장 또는 운영자만 거절할 수 있어요." };
 
   const { error } = await supabase
     .from("memberships").delete().eq("id", membershipId);
@@ -397,13 +403,13 @@ export async function createPost(
   const { data: { user } } = await authClient.auth.getUser();
   if (!user) return { ok: false, error: "로그인이 필요합니다." };
 
-  // 해당 모임 멤버(approved)이거나 방장인지 확인
   const [{ data: group }, { data: membership }] = await Promise.all([
     supabase.from("groups").select("owner_id").eq("id", groupId).single(),
     supabase.from("memberships")
-      .select("id").eq("group_id", groupId).eq("user_id", user.id).eq("status", "approved").maybeSingle(),
+      .select("id, role").eq("group_id", groupId).eq("user_id", user.id).eq("status", "approved").maybeSingle(),
   ]);
   const isOwner = group?.owner_id === user.id;
+  const isOperator = membership?.role === "operator";
   if (!isOwner && !membership)
     return { ok: false, error: "모임 멤버만 글을 올릴 수 있어요." };
 
@@ -414,7 +420,7 @@ export async function createPost(
     imageUrl = await uploadGroupImage(authClient, imageFile);
   }
 
-  const isNotice = isOwner && form.get("is_notice") === "true";
+  const isNotice = (isOwner || isOperator) && form.get("is_notice") === "true";
 
   const { error } = await authClient.from("group_posts").insert({
     group_id: groupId,
@@ -450,10 +456,8 @@ export async function createEvent(
   const { data: { user } } = await authClient.auth.getUser();
   if (!user) return { ok: false, error: "로그인이 필요합니다." };
 
-  const { data: group } = await supabase
-    .from("groups").select("owner_id").eq("id", groupId).single();
-  if (group?.owner_id !== user.id)
-    return { ok: false, error: "방장만 정모를 만들 수 있어요." };
+  if (!(await isManagerOf(user.id, groupId)))
+    return { ok: false, error: "방장 또는 운영자만 정모를 만들 수 있어요." };
 
   const { data, error } = await authClient.from("group_events").insert({
     group_id: groupId,
@@ -504,6 +508,29 @@ export async function toggleAttendance(
     await authClient.from("event_attendees")
       .insert({ event_id: eventId, user_id: user.id });
   }
+
+  revalidatePath(`/groups/${groupId}`);
+  return { ok: true };
+}
+
+export async function setMemberRole(
+  membershipId: string,
+  groupId: string,
+  role: "member" | "operator",
+): Promise<ActionResult> {
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다." };
+
+  // 방장만 운영자 임명/해제 가능
+  const { data: group } = await supabase
+    .from("groups").select("owner_id").eq("id", groupId).single();
+  if (group?.owner_id !== user.id)
+    return { ok: false, error: "방장만 운영자를 임명할 수 있어요." };
+
+  const { error } = await supabase
+    .from("memberships").update({ role }).eq("id", membershipId);
+  if (error) return { ok: false, error: error.message };
 
   revalidatePath(`/groups/${groupId}`);
   return { ok: true };

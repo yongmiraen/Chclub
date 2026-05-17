@@ -64,7 +64,9 @@ export default async function GroupDetailPage({
   const userName = user?.user_metadata?.name || user?.user_metadata?.full_name || undefined;
   const groupWithOwner = group as Group & { owner_id?: string };
   const isOwner = user && groupWithOwner.owner_id === user.id;
-  const isMember = user && approvedMembers.some((m) => m.user_id === user.id);
+  const myMembership = user ? approvedMembers.find((m) => m.user_id === user.id) : null;
+  const isMember = !!myMembership;
+  const isOperator = myMembership?.role === "operator";
   const isPending = user && pendingMembers.some((m) => m.user_id === user.id);
 
   const scheduleParts = [
@@ -192,7 +194,7 @@ export default async function GroupDetailPage({
           <h2 className="text-base font-bold text-stone-900">활동 소식</h2>
           <div className="mt-3 space-y-3">
             {(isOwner || isMember) && (
-              <PostForm groupId={group.id} isOwner={!!isOwner} />
+              <PostForm groupId={group.id} isOwner={!!(isOwner || isOperator)} />
             )}
             {posts.filter((p) => !p.is_notice).length > 0
               ? posts.filter((p) => !p.is_notice).map((p) => (
@@ -223,8 +225,8 @@ export default async function GroupDetailPage({
             {isPrayer ? "🙏 함께 기도해요" : `참여 멤버 (${memberCount})`}
           </h2>
 
-          {/* 대기 중 — 방장만 봄 */}
-          {isOwner && pendingMembers.length > 0 && (
+          {/* 대기 중 — 방장·운영자만 봄 */}
+          {(isOwner || isOperator) && pendingMembers.length > 0 && (
             <div className="mt-3">
               <p className="mb-2 text-xs font-medium text-amber-700">
                 ⏳ 수락 대기 {pendingMembers.length}명
@@ -238,7 +240,7 @@ export default async function GroupDetailPage({
                     </div>
                     {m.message && <p className="mt-1 text-sm text-stone-600">{m.message}</p>}
                     {m.contact && <p className="mt-1 text-xs text-stone-500">연락처 · {m.contact}</p>}
-                    <MemberActions membershipId={m.id} groupId={group.id} />
+                    <MemberActions membershipId={m.id} groupId={group.id} isPending />
                   </div>
                 ))}
               </div>
@@ -254,11 +256,24 @@ export default async function GroupDetailPage({
             {approvedMembers.map((m) => (
               <div key={m.id} className="rounded-xl border border-stone-200 bg-white p-3.5">
                 <div className="flex items-center justify-between">
-                  <strong className="text-sm text-stone-900">{m.nickname}</strong>
+                  <div className="flex items-center gap-1.5">
+                    <strong className="text-sm text-stone-900">{m.nickname}</strong>
+                    {m.role === "operator" && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">⭐ 운영자</span>
+                    )}
+                  </div>
                   <span className="text-[11px] text-stone-400">{new Date(m.created_at).toLocaleDateString("ko-KR")}</span>
                 </div>
                 {m.message && <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-stone-700">{m.message}</p>}
                 {m.contact && <p className="mt-1.5 text-xs text-stone-500">연락처 · {m.contact}</p>}
+                {isOwner && (
+                  <MemberActions
+                    membershipId={m.id}
+                    groupId={group.id}
+                    role={m.role ?? "member"}
+                    isOwnerView
+                  />
+                )}
               </div>
             ))}
           </div>
