@@ -398,6 +398,85 @@ export async function createPost(
   return { ok: true };
 }
 
+export async function createEvent(
+  groupId: string,
+  _prev: ActionResult | null,
+  form: FormData,
+): Promise<ActionResult> {
+  const title = str(form, "title");
+  const description = str(form, "description");
+  const location = str(form, "location");
+  const eventDate = str(form, "event_date");
+  const maxAttendees = str(form, "max_attendees");
+
+  if (title.length < 2 || title.length > 60)
+    return { ok: false, error: "제목은 2~60자로 입력해 주세요." };
+  if (!eventDate)
+    return { ok: false, error: "날짜와 시간을 입력해 주세요." };
+
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다." };
+
+  const { data: group } = await supabase
+    .from("groups").select("owner_id").eq("id", groupId).single();
+  if (group?.owner_id !== user.id)
+    return { ok: false, error: "방장만 정모를 만들 수 있어요." };
+
+  const { data, error } = await authClient.from("group_events").insert({
+    group_id: groupId,
+    title,
+    description: description || null,
+    location: location || null,
+    event_date: new Date(eventDate).toISOString(),
+    max_attendees: maxAttendees ? Number(maxAttendees) : null,
+    created_by: user.id,
+  }).select("id").single();
+
+  if (error || !data) return { ok: false, error: error?.message ?? "저장에 실패했습니다." };
+
+  revalidatePath(`/groups/${groupId}`);
+  redirect(`/groups/${groupId}`);
+}
+
+export async function deleteEvent(
+  eventId: string,
+  groupId: string,
+): Promise<ActionResult> {
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다." };
+
+  const { error } = await authClient.from("group_events").delete().eq("id", eventId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/groups/${groupId}`);
+  return { ok: true };
+}
+
+export async function toggleAttendance(
+  eventId: string,
+  groupId: string,
+  isAttending: boolean,
+): Promise<ActionResult> {
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다." };
+
+  if (isAttending) {
+    // 참석 취소
+    await authClient.from("event_attendees")
+      .delete().eq("event_id", eventId).eq("user_id", user.id);
+  } else {
+    // 참석 등록
+    await authClient.from("event_attendees")
+      .insert({ event_id: eventId, user_id: user.id });
+  }
+
+  revalidatePath(`/groups/${groupId}`);
+  return { ok: true };
+}
+
 export async function reportGroup(
   groupId: string,
   reason: string,

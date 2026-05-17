@@ -35,3 +35,22 @@ export type GroupPost = {
 };
 
 export type GroupWithCount = Group & { member_count: number };
+
+export type GroupEvent = {
+  id: string;
+  group_id: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  event_date: string;
+  max_attendees: number | null;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type EventAttendee = {
+  id: string;
+  event_id: string;
+  user_id: string;
+  created_at: string;
+};

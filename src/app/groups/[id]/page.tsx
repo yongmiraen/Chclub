@@ -10,7 +10,8 @@ import CreatorMark from "@/components/CreatorMark";
 import MemberActions from "@/components/MemberActions";
 import PostForm from "@/components/PostForm";
 import ReportButton from "@/components/ReportButton";
-import type { Group, Membership, GroupPost } from "@/lib/types";
+import EventCard from "@/components/EventCard";
+import type { Group, Membership, GroupPost, GroupEvent, EventAttendee } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,8 @@ export default async function GroupDetailPage({
     { data: group, error: groupError },
     { data: members },
     postsResult,
+    eventsResult,
+    attendeesResult,
     { data: { user } },
   ] = await Promise.all([
     supabase.from("groups").select("*").eq("id", id).single<Group>(),
@@ -38,12 +41,19 @@ export default async function GroupDetailPage({
       .order("created_at", { ascending: true }).returns<Membership[]>(),
     supabase.from("group_posts").select("*").eq("group_id", id)
       .order("created_at", { ascending: false }).limit(20).returns<GroupPost[]>(),
+    supabase.from("group_events").select("*").eq("group_id", id)
+      .order("event_date", { ascending: true }).returns<GroupEvent[]>(),
+    supabase.from("event_attendees").select("*")
+      .in("event_id", (await supabase.from("group_events").select("id").eq("group_id", id))
+        .data?.map((e) => e.id) ?? []).returns<EventAttendee[]>(),
     supabase.auth.getUser(),
   ]);
 
   if (groupError || !group) notFound();
 
   const posts = postsResult.data ?? [];
+  const events = eventsResult.data ?? [];
+  const attendees = attendeesResult.data ?? [];
   // status 컬럼이 없는 기존 데이터 대비 — null/undefined는 approved 처리
   const approvedMembers = (members ?? []).filter((m) => !m.status || m.status === "approved");
   const pendingMembers = (members ?? []).filter((m) => m.status === "pending");
@@ -124,6 +134,40 @@ export default async function GroupDetailPage({
 
           <p className="mt-5 whitespace-pre-wrap text-[15px] leading-7 text-stone-700">{group.description}</p>
           <div className="mt-3 text-xs text-stone-500">정원 {group.max_members}명</div>
+        </section>
+
+        {/* 정모 일정 */}
+        <section className="mt-5 px-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-stone-900">정모 일정</h2>
+            {isOwner && (
+              <Link href={`/groups/${group.id}/events/new`}
+                className="rounded-full bg-amber-700 px-3 py-1.5 text-xs font-medium text-white">
+                + 정모 만들기
+              </Link>
+            )}
+          </div>
+          <div className="mt-3 space-y-3">
+            {events.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-stone-200 bg-stone-50 p-5 text-center text-sm text-stone-400">
+                {isOwner ? "첫 정모 일정을 잡아보세요!" : "아직 정모 일정이 없어요."}
+              </div>
+            ) : events.map((ev) => {
+              const evAttendees = attendees.filter((a) => a.event_id === ev.id);
+              const isAttending = !!user && evAttendees.some((a) => a.user_id === user.id);
+              return (
+                <EventCard
+                  key={ev.id}
+                  event={ev}
+                  groupId={group.id}
+                  attendeeCount={evAttendees.length}
+                  isAttending={isAttending}
+                  isOwner={!!isOwner}
+                  isLoggedIn={!!user}
+                />
+              );
+            })}
+          </div>
         </section>
 
         {/* 활동 피드 */}
