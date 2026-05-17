@@ -55,6 +55,7 @@ export default async function GroupDetailPage({
   const groupWithOwner = group as Group & { owner_id?: string };
   const isOwner = user && groupWithOwner.owner_id === user.id;
   const isMember = user && approvedMembers.some((m) => m.user_id === user.id);
+  const isPending = user && pendingMembers.some((m) => m.user_id === user.id);
 
   const scheduleParts = [
     group.meeting_frequency,
@@ -217,7 +218,28 @@ export default async function GroupDetailPage({
         )}
       </div>
 
-      {!isOwner && <JoinPanel groupId={group.id} full={full} userName={userName} />}
+      {!isOwner && !isMember && !isPending && (
+        <JoinPanel groupId={group.id} full={full} userName={userName} />
+      )}
+      {isPending && (
+        <div className="safe-bottom border-t border-stone-100 bg-white px-5 py-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+            <span className="text-xl">⏳</span>
+            <div>
+              <p className="text-sm font-semibold text-amber-900">가입 신청 완료</p>
+              <p className="mt-0.5 text-xs text-amber-700">방장이 수락하면 멤버가 돼요.</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {isMember && !isOwner && (
+        <div className="safe-bottom border-t border-stone-100 bg-white px-5 py-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3.5">
+            <span className="text-xl">✅</span>
+            <p className="text-sm font-medium text-stone-700">참여 중인 모임이에요.</p>
+          </div>
+        </div>
+      )}
     </>
   );
 }
