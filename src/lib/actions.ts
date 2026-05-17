@@ -229,10 +229,13 @@ export async function saveProfile(
   form: FormData,
 ): Promise<ActionResult> {
   const churchName = str(form, "church_name");
+  const birthDate = str(form, "birth_date");
   const next = str(form, "next") || "/";
 
   if (churchName.length < 1 || churchName.length > 50)
     return { ok: false, error: "교회 이름은 1~50자로 입력해 주세요." };
+  if (!birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate))
+    return { ok: false, error: "생년월일을 입력해 주세요." };
 
   const authClient = await createServerClient();
   const { data: { user } } = await authClient.auth.getUser();
@@ -242,6 +245,7 @@ export async function saveProfile(
   const { error } = await authClient.from("profiles").upsert({
     id: user.id,
     church_name: churchName,
+    birth_date: birthDate,
     updated_at: new Date().toISOString(),
   });
 

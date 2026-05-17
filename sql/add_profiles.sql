@@ -1,7 +1,8 @@
--- profiles 테이블: 유저 추가 정보 (소속 교회 등)
+-- profiles 테이블: 유저 추가 정보 (소속 교회, 생년월일 등)
 CREATE TABLE IF NOT EXISTS profiles (
   id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   church_name TEXT,
+  birth_date  DATE,
   updated_at  TIMESTAMPTZ DEFAULT NOW()
 );
 

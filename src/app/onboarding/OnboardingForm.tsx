@@ -31,10 +31,25 @@ export default function OnboardingForm({ next }: { next: string }) {
             className="mt-2 w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-amber-600"
           />
         </label>
-        <p className="mt-2 text-xs text-stone-400">
-          나중에 내 프로필에서 수정할 수 있어요.
-        </p>
       </div>
+
+      <div>
+        <label className="block">
+          <span className="text-sm font-medium text-stone-800">생년월일</span>
+          <input
+            name="birth_date"
+            type="date"
+            required
+            min="1920-01-01"
+            max={new Date().toISOString().slice(0, 10)}
+            className="mt-2 w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-amber-600"
+          />
+        </label>
+      </div>
+
+      <p className="text-xs text-stone-400">
+        입력하신 정보는 나중에 내 프로필에서 수정할 수 있어요.
+      </p>
 
       <button
         type="submit"
