@@ -9,9 +9,11 @@ export type Group = {
   edit_pin_hash: string;
   created_at: string;
   image_url: string | null;
-  meeting_frequency: string | null; // 매주 / 격주 / 매월 / 비정기
-  meeting_day: string | null;       // 예) 토, 토·일
-  meeting_time: string | null;      // 예) 10:00
+  meeting_frequency: string | null;
+  meeting_day: string | null;
+  meeting_time: string | null;
+  min_age: number | null;
+  max_age: number | null;
 };
 
 export type Membership = {

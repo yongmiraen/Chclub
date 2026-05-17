@@ -48,6 +48,10 @@ export async function createGroup(
   const meetingFrequency = str(form, "meeting_frequency");
   const meetingDay = str(form, "meeting_day");
   const meetingTime = str(form, "meeting_time");
+  const minAgeRaw = str(form, "min_age");
+  const maxAgeRaw = str(form, "max_age");
+  const minAge = minAgeRaw ? Number(minAgeRaw) : null;
+  const maxAge = maxAgeRaw ? Number(maxAgeRaw) : null;
 
   const authClient = await createServerClient();
   const { data: { user } } = await authClient.auth.getUser();
@@ -62,6 +66,8 @@ export async function createGroup(
     return { ok: false, error: "정원은 2~200명으로 입력해 주세요." };
   if (region.length > 30)
     return { ok: false, error: "지역은 30자 이내로 입력해 주세요." };
+  if (minAge !== null && maxAge !== null && minAge > maxAge)
+    return { ok: false, error: "최소 나이가 최대 나이보다 클 수 없어요." };
 
   if (!user) {
     if (creatorNickname.length < 1 || creatorNickname.length > 20)
@@ -93,6 +99,8 @@ export async function createGroup(
       meeting_frequency: meetingFrequency || null,
       meeting_day: meetingDay || null,
       meeting_time: meetingTime || null,
+      min_age: minAge,
+      max_age: maxAge,
       ...(user ? { owner_id: user.id } : {}),
     })
     .select("id")
@@ -120,6 +128,10 @@ export async function updateGroup(
   const meetingFrequency = str(form, "meeting_frequency");
   const meetingDay = str(form, "meeting_day");
   const meetingTime = str(form, "meeting_time");
+  const minAgeRaw = str(form, "min_age");
+  const maxAgeRaw = str(form, "max_age");
+  const minAge = minAgeRaw ? Number(minAgeRaw) : null;
+  const maxAge = maxAgeRaw ? Number(maxAgeRaw) : null;
 
   if (title.length < 2 || title.length > 60)
     return { ok: false, error: "모임 이름은 2~60자로 입력해 주세요." };
@@ -129,6 +141,8 @@ export async function updateGroup(
     return { ok: false, error: "카테고리를 선택해 주세요." };
   if (!Number.isFinite(maxMembers) || maxMembers < 2 || maxMembers > 200)
     return { ok: false, error: "정원은 2~200명으로 입력해 주세요." };
+  if (minAge !== null && maxAge !== null && minAge > maxAge)
+    return { ok: false, error: "최소 나이가 최대 나이보다 클 수 없어요." };
 
   const authClient = await createServerClient();
   const { data: { user } } = await authClient.auth.getUser();
@@ -168,6 +182,8 @@ export async function updateGroup(
       meeting_frequency: meetingFrequency || null,
       meeting_day: meetingDay || null,
       meeting_time: meetingTime || null,
+      min_age: minAge,
+      max_age: maxAge,
     })
     .eq("id", groupId);
 
@@ -230,7 +246,7 @@ export async function joinGroup(
 
   const { data: group, error: fetchErr } = await supabase
     .from("groups")
-    .select("id, max_members")
+    .select("id, max_members, min_age, max_age")
     .eq("id", groupId)
     .single();
   if (fetchErr || !group)
@@ -246,6 +262,19 @@ export async function joinGroup(
 
   const authClient = await createServerClient();
   const { data: { user } } = await authClient.auth.getUser();
+
+  // 연령 제한 검증
+  if ((group.min_age || group.max_age) && user) {
+    const { data: profile } = await authClient
+      .from("profiles").select("birth_date").eq("id", user.id).single();
+    if (!profile?.birth_date)
+      return { ok: false, error: "프로필에 생년월일을 입력해야 가입할 수 있어요." };
+    const age = new Date().getFullYear() - new Date(profile.birth_date).getFullYear();
+    if (group.min_age && age < group.min_age)
+      return { ok: false, error: `이 모임은 ${group.min_age}세 이상만 가입할 수 있어요.` };
+    if (group.max_age && age > group.max_age)
+      return { ok: false, error: `이 모임은 ${group.max_age}세 이하만 가입할 수 있어요.` };
+  }
 
   // 방장이 있는 모임은 pending, 비로그인 모임은 바로 approved
   const { data: groupOwner } = await supabase

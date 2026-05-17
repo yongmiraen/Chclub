@@ -21,14 +21,29 @@ const TABS: { key: SortKey; label: string }[] = [
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; deleted?: string; region?: string; q?: string }>;
+  searchParams: Promise<{ sort?: string; deleted?: string; region?: string; q?: string; myAge?: string }>;
 }) {
   const sp = await searchParams;
   const sort: SortKey = sp.sort === "popular" || sp.sort === "new" ? sp.sort : "discover";
   const regionFilter = ALL_REGIONS.includes(sp.region ?? "") ? sp.region! : "";
   const searchQuery = (sp.q ?? "").trim().slice(0, 50);
+  const filterMyAge = sp.myAge === "1";
 
   const supabase = await createClient();
+
+  // 로그인 유저 나이 계산 (내 연령대 필터용)
+  let userAge: number | null = null;
+  if (filterMyAge) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles").select("birth_date").eq("id", user.id).single();
+      if (profile?.birth_date) {
+        userAge = new Date().getFullYear() - new Date(profile.birth_date).getFullYear();
+      }
+    }
+  }
+
   let query = supabase
     .from("groups")
     .select("*, memberships(count)")
@@ -41,6 +56,14 @@ export default async function Home({
 
   let groups: GroupWithCount[] =
     data?.map((g) => ({ ...g, member_count: g.memberships?.[0]?.count ?? 0 })) ?? [];
+
+  // 내 연령대 필터 — 클라이언트 사이드로 처리
+  if (filterMyAge && userAge !== null) {
+    const age = userAge;
+    groups = groups.filter((g) =>
+      (!g.min_age || g.min_age <= age) && (!g.max_age || g.max_age >= age)
+    );
+  }
 
   if (sort === "popular")
     groups = [...groups].sort((a, b) => b.member_count - a.member_count);
@@ -110,12 +133,15 @@ export default async function Home({
         </div>
       </section>
 
-      {/* 지역 필터 — 서울 25개 구 */}
+      {/* 연령대 + 지역 필터 */}
       <section className="border-b border-stone-100 px-4 py-3">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <RegionChip label="전체" value="" current={regionFilter} sort={sort} />
+          {/* 내 연령대 필터 */}
+          <AgeChip active={filterMyAge} sort={sort} regionFilter={regionFilter} searchQuery={searchQuery} />
+          <span className="shrink-0 text-stone-200">|</span>
+          <RegionChip label="전체" value="" current={regionFilter} sort={sort} myAge={filterMyAge} />
           {ALL_REGIONS.map((r) => (
-            <RegionChip key={r} label={r} value={r} current={regionFilter} sort={sort} />
+            <RegionChip key={r} label={r} value={r} current={regionFilter} sort={sort} myAge={filterMyAge} />
           ))}
         </div>
       </section>
@@ -166,13 +192,14 @@ export default async function Home({
   );
 }
 
-function RegionChip({ label, value, current, sort }: {
-  label: string; value: string; current: string; sort: string;
+function RegionChip({ label, value, current, sort, myAge }: {
+  label: string; value: string; current: string; sort: string; myAge: boolean;
 }) {
   const active = current === value;
   const params = new URLSearchParams();
   if (value) params.set("region", value);
   if (sort !== "discover") params.set("sort", sort);
+  if (myAge) params.set("myAge", "1");
   const href = `/${params.toString() ? `?${params}` : ""}`;
   return (
     <Link href={href}
@@ -182,6 +209,27 @@ function RegionChip({ label, value, current, sort }: {
           : "border-stone-200 bg-white text-stone-600 hover:border-stone-300"
       }`}>
       {label}
+    </Link>
+  );
+}
+
+function AgeChip({ active, sort, regionFilter, searchQuery }: {
+  active: boolean; sort: string; regionFilter: string; searchQuery: string;
+}) {
+  const params = new URLSearchParams();
+  if (!active) params.set("myAge", "1");
+  if (regionFilter) params.set("region", regionFilter);
+  if (sort !== "discover") params.set("sort", sort);
+  if (searchQuery) params.set("q", searchQuery);
+  const href = `/?${params.toString()}`;
+  return (
+    <Link href={href}
+      className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition ${
+        active
+          ? "border-amber-700 bg-amber-700 text-white"
+          : "border-stone-200 bg-white text-stone-600 hover:border-stone-300"
+      }`}>
+      내 연령대
     </Link>
   );
 }

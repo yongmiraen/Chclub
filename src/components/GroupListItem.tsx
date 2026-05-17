@@ -54,6 +54,9 @@ export default function GroupListItem({
           </span>
           {group.region && <span>· {group.region}</span>}
           {schedule && <span>· {schedule}</span>}
+          {(group.min_age || group.max_age) && (
+            <span>· {group.min_age ?? ""}~{group.max_age ?? ""}세</span>
+          )}
           <span>· 멤버</span>
           <span className={full ? "font-medium text-rose-600" : "text-stone-700"}>
             {group.member_count}

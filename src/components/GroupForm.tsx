@@ -19,6 +19,8 @@ type Props = {
     meeting_frequency?: string;
     meeting_day?: string;
     meeting_time?: string;
+    min_age?: number;
+    max_age?: number;
   };
   submitLabel: string;
   hidePin?: boolean;
@@ -162,6 +164,22 @@ export default function GroupForm({ action, mode, defaults = {}, submitLabel, hi
       <Field label="정원" hint="2~200명">
         <input name="max_members" type="number" required min={2} max={200}
           defaultValue={defaults.max_members ?? 10} className="input" />
+      </Field>
+
+      <Field label="연령 제한" hint="선택 — 비워두면 누구나">
+        <div className="flex items-center gap-2">
+          <input name="min_age" type="number" min={13} max={99}
+            defaultValue={defaults.min_age ?? ""}
+            placeholder="최소 나이"
+            className="input w-full" />
+          <span className="shrink-0 text-sm text-stone-400">~</span>
+          <input name="max_age" type="number" min={13} max={99}
+            defaultValue={defaults.max_age ?? ""}
+            placeholder="최대 나이"
+            className="input w-full" />
+          <span className="shrink-0 text-sm text-stone-400">세</span>
+        </div>
+        <p className="mt-1.5 text-xs text-stone-400">예) 20 ~ 39 → 20·30대만 가입 가능</p>
       </Field>
 
       <Field label="소개글" hint="취지·진행 방식 등">

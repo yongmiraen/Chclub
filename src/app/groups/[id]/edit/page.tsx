@@ -45,6 +45,8 @@ export default async function EditGroupPage({ params }: { params: Promise<{ id: 
               meeting_frequency: group.meeting_frequency ?? undefined,
               meeting_day: group.meeting_day ?? undefined,
               meeting_time: group.meeting_time ?? undefined,
+              min_age: group.min_age ?? undefined,
+              max_age: group.max_age ?? undefined,
             }}
             submitLabel="저장해요"
             hidePin={!!isOwner}
