@@ -90,9 +90,9 @@ export default async function Home({
         </div>
       </section>
 
-      {/* 지역 필터 */}
+      {/* 지역 필터 — 서울 25개 구 */}
       <section className="border-b border-stone-100 px-4 py-3">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <RegionChip label="전체" value="" current={regionFilter} sort={sort} />
           {ALL_REGIONS.map((r) => (
             <RegionChip key={r} label={r} value={r} current={regionFilter} sort={sort} />
