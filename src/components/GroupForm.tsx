@@ -36,7 +36,7 @@ export default function GroupForm({ action, mode, defaults = {}, submitLabel, hi
   );
   const error = state && !state.ok ? state.error : null;
   const spiritual = CATEGORIES.filter((c) => c.group === "신앙");
-  const hobby = CATEGORIES.filter((c) => c.group === "취미");
+  const hobby = CATEGORIES.filter((c) => c.group === "삶·취미");
 
   function toggleDay(day: string) {
     setSelectedDays((prev) =>
@@ -91,7 +91,7 @@ export default function GroupForm({ action, mode, defaults = {}, submitLabel, hi
       <Field label="카테고리">
         <div className="space-y-3">
           <FieldsetGroup title="신앙" name="category" options={spiritual} defaultValue={defaults.category} />
-          <FieldsetGroup title="취미" name="category" options={hobby} defaultValue={defaults.category} />
+          <FieldsetGroup title="삶·취미" name="category" options={hobby} defaultValue={defaults.category} />
         </div>
       </Field>
 
