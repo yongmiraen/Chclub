@@ -14,7 +14,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
   // 기본값: 오늘 날짜 + 1주일 후, 오전 10시
   const defaultDate = new Date();
   defaultDate.setDate(defaultDate.getDate() + 7);
-  defaultDate.setHours(10, 0, 0, 0);
+  defaultDate.setHours(10, 0, 0, 0); // 정각으로 고정
   const defaultDateStr = defaultDate.toISOString().slice(0, 16);
 
   return (
@@ -40,6 +40,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
           name="event_date"
           type="datetime-local"
           required
+          step={1800}
           defaultValue={defaultDateStr}
           className="input"
         />
