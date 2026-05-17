@@ -30,7 +30,7 @@ export default async function GroupDetailPage({
   const [
     { data: group, error: groupError },
     { data: members },
-    { data: posts },
+    postsResult,
     { data: { user } },
   ] = await Promise.all([
     supabase.from("groups").select("*").eq("id", id).single<Group>(),
@@ -43,8 +43,10 @@ export default async function GroupDetailPage({
 
   if (groupError || !group) notFound();
 
-  const approvedMembers = members?.filter((m) => m.status === "approved") ?? [];
-  const pendingMembers = members?.filter((m) => m.status === "pending") ?? [];
+  const posts = postsResult.data ?? [];
+  // status 컬럼이 없는 기존 데이터 대비 — null/undefined는 approved 처리
+  const approvedMembers = (members ?? []).filter((m) => !m.status || m.status === "approved");
+  const pendingMembers = (members ?? []).filter((m) => m.status === "pending");
   const memberCount = approvedMembers.length;
   const full = memberCount >= group.max_members;
   const tone = toneFor(group.category);
