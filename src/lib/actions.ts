@@ -21,6 +21,19 @@ export type ActionResult =
   | { ok: true; redirect?: string }
   | { ok: false; error: string };
 
+async function uploadGroupImage(
+  client: Awaited<ReturnType<typeof createServerClient>>,
+  file: File,
+): Promise<string | null> {
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { data, error } = await client.storage
+    .from("group-images")
+    .upload(path, file, { contentType: file.type, upsert: false });
+  if (error || !data) return null;
+  return client.storage.from("group-images").getPublicUrl(data.path).data.publicUrl;
+}
+
 export async function createGroup(
   _prev: ActionResult | null,
   form: FormData,
@@ -32,8 +45,10 @@ export async function createGroup(
   const maxMembers = Number(str(form, "max_members"));
   const creatorNickname = str(form, "creator_nickname");
   const pin = pinDigits(form, "edit_pin");
+  const meetingFrequency = str(form, "meeting_frequency");
+  const meetingDay = str(form, "meeting_day");
+  const meetingTime = str(form, "meeting_time");
 
-  // 로그인 여부 먼저 확인
   const authClient = await createServerClient();
   const { data: { user } } = await authClient.auth.getUser();
 
@@ -48,12 +63,18 @@ export async function createGroup(
   if (region.length > 30)
     return { ok: false, error: "지역은 30자 이내로 입력해 주세요." };
 
-  // 로그인 상태면 닉네임·PIN 불필요 (계정 정보 사용)
   if (!user) {
     if (creatorNickname.length < 1 || creatorNickname.length > 20)
       return { ok: false, error: "닉네임은 1~20자로 입력해 주세요." };
     if (!pin)
       return { ok: false, error: "수정용 PIN은 숫자 4자리로 입력해 주세요." };
+  }
+
+  // 이미지 업로드
+  let imageUrl: string | null = null;
+  const imageFile = form.get("image");
+  if (imageFile instanceof File && imageFile.size > 0) {
+    imageUrl = await uploadGroupImage(authClient, imageFile);
   }
 
   const displayName = user?.user_metadata?.name || user?.user_metadata?.full_name || creatorNickname;
@@ -68,6 +89,10 @@ export async function createGroup(
       max_members: maxMembers,
       creator_nickname: user ? displayName : creatorNickname,
       edit_pin_hash: pin ? hashPin(pin) : null,
+      image_url: imageUrl,
+      meeting_frequency: meetingFrequency || null,
+      meeting_day: meetingDay || null,
+      meeting_time: meetingTime || null,
       ...(user ? { owner_id: user.id } : {}),
     })
     .select("id")
@@ -92,6 +117,9 @@ export async function updateGroup(
   const region = str(form, "region");
   const maxMembers = Number(str(form, "max_members"));
   const pin = pinDigits(form, "edit_pin");
+  const meetingFrequency = str(form, "meeting_frequency");
+  const meetingDay = str(form, "meeting_day");
+  const meetingTime = str(form, "meeting_time");
 
   if (title.length < 2 || title.length > 60)
     return { ok: false, error: "모임 이름은 2~60자로 입력해 주세요." };
@@ -102,13 +130,12 @@ export async function updateGroup(
   if (!Number.isFinite(maxMembers) || maxMembers < 2 || maxMembers > 200)
     return { ok: false, error: "정원은 2~200명으로 입력해 주세요." };
 
-  // 로그인 사용자이고 owner면 PIN 없이 수정 가능
   const authClient = await createServerClient();
   const { data: { user } } = await authClient.auth.getUser();
 
   const { data: group, error: fetchErr } = await supabase
     .from("groups")
-    .select("edit_pin_hash, owner_id")
+    .select("edit_pin_hash, owner_id, image_url")
     .eq("id", groupId)
     .single();
 
@@ -122,6 +149,13 @@ export async function updateGroup(
       return { ok: false, error: "PIN이 일치하지 않습니다." };
   }
 
+  // 새 이미지가 있으면 업로드, 없으면 기존 유지
+  let imageUrl: string | null = group.image_url ?? null;
+  const imageFile = form.get("image");
+  if (imageFile instanceof File && imageFile.size > 0) {
+    imageUrl = await uploadGroupImage(authClient, imageFile);
+  }
+
   const { error } = await supabase
     .from("groups")
     .update({
@@ -130,6 +164,10 @@ export async function updateGroup(
       category,
       region: region || null,
       max_members: maxMembers,
+      image_url: imageUrl,
+      meeting_frequency: meetingFrequency || null,
+      meeting_day: meetingDay || null,
+      meeting_time: meetingTime || null,
     })
     .eq("id", groupId);
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import Image from "next/image";
 import { CATEGORIES } from "@/lib/categories";
 import { REGION_GROUPS } from "@/lib/regions";
 import type { ActionResult } from "@/lib/actions";
@@ -14,26 +15,73 @@ type Props = {
     category?: string;
     region?: string;
     max_members?: number;
+    image_url?: string;
+    meeting_frequency?: string;
+    meeting_day?: string;
+    meeting_time?: string;
   };
   submitLabel: string;
-  hidePin?: boolean;  // 로그인 사용자는 PIN 불필요
+  hidePin?: boolean;
 };
 
+const DAYS = ["월", "화", "수", "목", "금", "토", "일"];
+const FREQUENCIES = ["매주", "격주", "매월", "비정기"];
 const initial: ActionResult | null = null;
 
 export default function GroupForm({ action, mode, defaults = {}, submitLabel, hidePin = false }: Props) {
   const [state, formAction, pending] = useActionState(action, initial);
+  const [preview, setPreview] = useState<string | null>(defaults.image_url ?? null);
+  const [selectedDays, setSelectedDays] = useState<string[]>(
+    defaults.meeting_day ? defaults.meeting_day.split("·").map((d) => d.trim()) : []
+  );
   const error = state && !state.ok ? state.error : null;
   const spiritual = CATEGORIES.filter((c) => c.group === "신앙");
   const hobby = CATEGORIES.filter((c) => c.group === "취미");
 
+  function toggleDay(day: string) {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
+  }
+
   return (
     <form action={formAction} className="space-y-5">
+      <input type="hidden" name="meeting_day" value={selectedDays.join("·")} />
+
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
           {error}
         </div>
       )}
+
+      {/* 대표 이미지 */}
+      <Field label="대표 이미지" hint="선택 · 최대 5MB">
+        <label className="block cursor-pointer">
+          {preview ? (
+            <div className="relative h-44 w-full overflow-hidden rounded-2xl">
+              <Image src={preview} alt="미리보기" fill className="object-cover" unoptimized />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 text-xs font-medium text-white opacity-0 transition hover:opacity-100">
+                탭해서 변경
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-44 w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-stone-300 bg-stone-50 text-stone-400">
+              <span className="text-3xl">📷</span>
+              <span className="text-sm">이미지 추가</span>
+            </div>
+          )}
+          <input
+            type="file"
+            name="image"
+            accept="image/*"
+            className="sr-only"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) setPreview(URL.createObjectURL(file));
+            }}
+          />
+        </label>
+      </Field>
 
       <Field label="모임 이름" hint="2~60자">
         <input name="title" required maxLength={60} minLength={2}
@@ -71,15 +119,55 @@ export default function GroupForm({ action, mode, defaults = {}, submitLabel, hi
         </div>
       </Field>
 
+      {/* 정모 일정 */}
+      <Field label="정모 일정" hint="선택">
+        <div className="space-y-3">
+          <div>
+            <div className="mb-1.5 text-xs text-stone-500">주기</div>
+            <div className="flex flex-wrap gap-2">
+              {FREQUENCIES.map((f) => (
+                <label key={f}
+                  className="cursor-pointer rounded-full border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 has-checked:border-amber-700 has-checked:bg-amber-700 has-checked:text-white">
+                  <input type="radio" name="meeting_frequency" value={f}
+                    defaultChecked={defaults.meeting_frequency === f} className="sr-only" />
+                  {f}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="mb-1.5 text-xs text-stone-500">요일 (복수 선택 가능)</div>
+            <div className="flex gap-1.5">
+              {DAYS.map((d) => (
+                <button key={d} type="button" onClick={() => toggleDay(d)}
+                  className={`h-9 w-9 rounded-full border text-sm font-medium transition ${
+                    selectedDays.includes(d)
+                      ? "border-amber-700 bg-amber-700 text-white"
+                      : "border-stone-300 bg-white text-stone-700"
+                  }`}>
+                  {d}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="mb-1.5 text-xs text-stone-500">시간</div>
+            <input type="time" name="meeting_time"
+              defaultValue={defaults.meeting_time ?? ""}
+              className="input w-auto" />
+          </div>
+        </div>
+      </Field>
+
       <Field label="정원" hint="2~200명">
         <input name="max_members" type="number" required min={2} max={200}
           defaultValue={defaults.max_members ?? 10} className="input" />
       </Field>
 
-      <Field label="소개글" hint="취지·진행 방식·요일 등">
+      <Field label="소개글" hint="취지·진행 방식 등">
         <textarea name="description" rows={6} maxLength={2000}
           defaultValue={defaults.description ?? ""}
-          placeholder={`예)\n- 매주 토요일 오전 9시에 만나요\n- 마가복음 1장씩 읽고 나눠요\n- 누구나 환영해요`}
+          placeholder={`예)\n- 마가복음 1장씩 읽고 나눠요\n- 누구나 환영해요`}
           className="input" />
       </Field>
 

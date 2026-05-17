@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import { categoryLabel, categoryEmoji } from "@/lib/categories";
@@ -44,6 +45,14 @@ export default async function GroupDetailPage({
   const groupWithOwner = group as Group & { owner_id?: string };
   const isOwner = user && groupWithOwner.owner_id === user.id;
 
+  // 정모 일정 텍스트
+  const scheduleParts = [
+    group.meeting_frequency,
+    group.meeting_day,
+    group.meeting_time ? group.meeting_time.slice(0, 5) : null,
+  ].filter(Boolean);
+  const scheduleText = scheduleParts.join(" ");
+
   return (
     <>
       {created && <CreatorMark groupId={group.id} title={group.title} />}
@@ -66,21 +75,27 @@ export default async function GroupDetailPage({
         {(created || updated) && (
           <div className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             {created
-              ? "모임이 만들어졌어요! 링크와 PIN 번호를 따로 적어두세요."
+              ? "모임이 만들어졌어요! 링크를 따로 적어두세요."
               : "변경 사항을 저장했어요."}
           </div>
         )}
 
-        <section className={`relative grid h-44 place-items-center ${tone.bg}`}>
-          <div className="text-6xl drop-shadow-sm">
-            {categoryEmoji(group.category)}
-          </div>
+        {/* 히어로 이미지 */}
+        <section className={`relative h-52 ${tone.bg}`}>
+          {group.image_url ? (
+            <Image src={group.image_url} alt={group.title} fill className="object-cover" />
+          ) : (
+            <div className="grid h-full w-full place-items-center text-6xl drop-shadow-sm">
+              {categoryEmoji(group.category)}
+            </div>
+          )}
         </section>
 
         <section className="px-5 pb-2 pt-5">
           <div className="flex flex-wrap items-center gap-1.5">
             <Chip>{categoryLabel(group.category)}</Chip>
             {group.region && <Chip>{group.region}</Chip>}
+            {scheduleText && <Chip>📅 {scheduleText}</Chip>}
             <Chip>멤버 {memberCount}</Chip>
             {full && <Chip tone="rose">마감</Chip>}
           </div>
@@ -160,7 +175,6 @@ export default async function GroupDetailPage({
         )}
       </div>
 
-      {/* 방장은 가입하기 버튼 숨김 */}
       {!isOwner && <JoinPanel groupId={group.id} full={full} userName={userName} />}
     </>
   );
