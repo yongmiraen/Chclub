@@ -46,11 +46,46 @@ export default async function MyPage() {
   const createdGroups: GroupWithCount[] =
     createdRows?.map((g) => ({ ...g, member_count: g.memberships?.[0]?.count ?? 0 })) ?? [];
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("church_name, birth_date")
+    .eq("id", user.id)
+    .single();
+
   const name = user.user_metadata?.name || user.user_metadata?.full_name || "회원";
+
+  // 나이 계산
+  const age = profile?.birth_date
+    ? new Date().getFullYear() - new Date(profile.birth_date).getFullYear()
+    : null;
 
   return (
     <>
       <TopBar title="내모임" subtitle={name} />
+
+      {/* 프로필 카드 */}
+      <section className="mx-4 mt-4 rounded-2xl border border-stone-200 bg-white p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-xl">
+              🙏
+            </div>
+            <div>
+              <p className="font-semibold text-stone-900">{name}</p>
+              <p className="mt-0.5 text-xs text-stone-500">
+                {profile?.church_name ?? "교회 미입력"}
+                {age && ` · ${age}세`}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/my/profile"
+            className="rounded-full border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-600 transition hover:bg-stone-50"
+          >
+            수정
+          </Link>
+        </div>
+      </section>
       {createdGroups.length === 0 && joinedGroups.length === 0 ? (
         <div className="mx-4 mt-6 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-10 text-center">
           <div className="text-4xl">🌱</div>
