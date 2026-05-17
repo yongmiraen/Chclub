@@ -224,6 +224,33 @@ export async function joinGroup(
   return { ok: true };
 }
 
+export async function saveProfile(
+  _prev: ActionResult | null,
+  form: FormData,
+): Promise<ActionResult> {
+  const churchName = str(form, "church_name");
+  const next = str(form, "next") || "/";
+
+  if (churchName.length < 1 || churchName.length > 50)
+    return { ok: false, error: "교회 이름은 1~50자로 입력해 주세요." };
+
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+
+  if (!user) return { ok: false, error: "로그인이 필요합니다." };
+
+  const { error } = await authClient.from("profiles").upsert({
+    id: user.id,
+    church_name: churchName,
+    updated_at: new Date().toISOString(),
+  });
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/my");
+  redirect(next);
+}
+
 export async function leaveMembership(
   membershipId: string,
   groupId: string,
