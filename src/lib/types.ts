@@ -21,6 +21,17 @@ export type Membership = {
   contact: string | null;
   message: string | null;
   created_at: string;
+  status: "pending" | "approved";
+  user_id: string | null;
+};
+
+export type GroupPost = {
+  id: string;
+  group_id: string;
+  author_id: string | null;
+  content: string;
+  image_url: string | null;
+  created_at: string;
 };
 
 export type GroupWithCount = Group & { member_count: number };

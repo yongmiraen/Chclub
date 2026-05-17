@@ -21,11 +21,12 @@ const TABS: { key: SortKey; label: string }[] = [
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; deleted?: string; region?: string }>;
+  searchParams: Promise<{ sort?: string; deleted?: string; region?: string; q?: string }>;
 }) {
   const sp = await searchParams;
   const sort: SortKey = sp.sort === "popular" || sp.sort === "new" ? sp.sort : "discover";
   const regionFilter = ALL_REGIONS.includes(sp.region ?? "") ? sp.region! : "";
+  const searchQuery = (sp.q ?? "").trim().slice(0, 50);
 
   const supabase = await createClient();
   let query = supabase
@@ -34,6 +35,7 @@ export default async function Home({
     .order("created_at", { ascending: false });
 
   if (regionFilter) query = query.eq("region", regionFilter);
+  if (searchQuery) query = query.ilike("title", `%${searchQuery}%`);
 
   const { data, error } = await query.returns<GroupsRow[]>();
 
@@ -56,6 +58,24 @@ export default async function Home({
           모임이 삭제되었어요.
         </div>
       )}
+
+      {/* 검색 */}
+      <form method="get" action="/" className="px-4 pt-3 pb-1">
+        <div className="flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2">
+          <svg className="h-4 w-4 shrink-0 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            name="q"
+            defaultValue={searchQuery}
+            placeholder="모임 이름으로 검색"
+            className="flex-1 bg-transparent text-sm text-stone-900 outline-none placeholder:text-stone-400"
+          />
+          {searchQuery && (
+            <Link href="/" className="text-xs text-stone-400">✕</Link>
+          )}
+        </div>
+      </form>
 
       {/* 정렬 탭 */}
       <div className="sticky top-14 z-10 border-b border-stone-100 bg-white">

@@ -247,11 +247,17 @@ export async function joinGroup(
   const authClient = await createServerClient();
   const { data: { user } } = await authClient.auth.getUser();
 
+  // 방장이 있는 모임은 pending, 비로그인 모임은 바로 approved
+  const { data: groupOwner } = await supabase
+    .from("groups").select("owner_id").eq("id", groupId).single();
+  const needsApproval = !!groupOwner?.owner_id;
+
   const { error } = await supabase.from("memberships").insert({
     group_id: groupId,
     nickname,
     contact: contact || null,
     message: message || null,
+    status: needsApproval ? "pending" : "approved",
     ...(user ? { user_id: user.id } : {}),
   });
 
@@ -304,5 +310,107 @@ export async function leaveMembership(
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/groups/${groupId}`);
   revalidatePath("/");
+  return { ok: true };
+}
+
+export async function approveMember(
+  membershipId: string,
+  groupId: string,
+): Promise<ActionResult> {
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다." };
+
+  const { data: group } = await supabase
+    .from("groups").select("owner_id").eq("id", groupId).single();
+  if (group?.owner_id !== user.id)
+    return { ok: false, error: "방장만 수락할 수 있습니다." };
+
+  const { error } = await supabase
+    .from("memberships").update({ status: "approved" }).eq("id", membershipId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/groups/${groupId}`);
+  return { ok: true };
+}
+
+export async function rejectMember(
+  membershipId: string,
+  groupId: string,
+): Promise<ActionResult> {
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다." };
+
+  const { data: group } = await supabase
+    .from("groups").select("owner_id").eq("id", groupId).single();
+  if (group?.owner_id !== user.id)
+    return { ok: false, error: "방장만 거절할 수 있습니다." };
+
+  const { error } = await supabase
+    .from("memberships").delete().eq("id", membershipId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/groups/${groupId}`);
+  return { ok: true };
+}
+
+export async function createPost(
+  groupId: string,
+  _prev: ActionResult | null,
+  form: FormData,
+): Promise<ActionResult> {
+  const content = str(form, "content");
+  if (content.length < 1 || content.length > 1000)
+    return { ok: false, error: "내용은 1~1000자로 입력해 주세요." };
+
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다." };
+
+  // 해당 모임 멤버(approved)이거나 방장인지 확인
+  const [{ data: group }, { data: membership }] = await Promise.all([
+    supabase.from("groups").select("owner_id").eq("id", groupId).single(),
+    supabase.from("memberships")
+      .select("id").eq("group_id", groupId).eq("user_id", user.id).eq("status", "approved").maybeSingle(),
+  ]);
+  const isOwner = group?.owner_id === user.id;
+  if (!isOwner && !membership)
+    return { ok: false, error: "모임 멤버만 글을 올릴 수 있어요." };
+
+  // 이미지 업로드
+  let imageUrl: string | null = null;
+  const imageFile = form.get("image");
+  if (imageFile instanceof File && imageFile.size > 0) {
+    imageUrl = await uploadGroupImage(authClient, imageFile);
+  }
+
+  const { error } = await authClient.from("group_posts").insert({
+    group_id: groupId,
+    author_id: user.id,
+    content,
+    image_url: imageUrl,
+  });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath("/");
+  return { ok: true };
+}
+
+export async function reportGroup(
+  groupId: string,
+  reason: string,
+): Promise<ActionResult> {
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다." };
+
+  const { error } = await authClient.from("reports").insert({
+    reporter_id: user.id,
+    group_id: groupId,
+    reason,
+  });
+  if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
