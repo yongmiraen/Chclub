@@ -385,11 +385,14 @@ export async function createPost(
     imageUrl = await uploadGroupImage(authClient, imageFile);
   }
 
+  const isNotice = isOwner && form.get("is_notice") === "true";
+
   const { error } = await authClient.from("group_posts").insert({
     group_id: groupId,
     author_id: user.id,
     content,
     image_url: imageUrl,
+    is_notice: isNotice,
   });
   if (error) return { ok: false, error: error.message };
 

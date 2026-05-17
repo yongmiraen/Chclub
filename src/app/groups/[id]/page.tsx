@@ -170,29 +170,50 @@ export default async function GroupDetailPage({
           </div>
         </section>
 
+        {/* 공지사항 — 상단 고정 */}
+        {posts.filter((p) => p.is_notice).length > 0 && (
+          <section className="mt-5 px-5">
+            <h2 className="text-base font-bold text-stone-900">📢 공지사항</h2>
+            <div className="mt-3 space-y-3">
+              {posts.filter((p) => p.is_notice).map((p) => (
+                <div key={p.id} className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-stone-800">{p.content}</p>
+                  <p className="mt-2 text-[11px] text-amber-600">
+                    {new Date(p.created_at).toLocaleDateString("ko-KR")}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* 활동 피드 */}
         <section className="mt-5 px-5">
           <h2 className="text-base font-bold text-stone-900">활동 소식</h2>
           <div className="mt-3 space-y-3">
-            {(isOwner || isMember) && <PostForm groupId={group.id} />}
-            {posts && posts.length > 0 ? posts.map((p) => (
-              <div key={p.id} className="rounded-2xl border border-stone-200 bg-white p-4">
-                {p.image_url && (
-                  <div className="relative mb-3 h-48 w-full overflow-hidden rounded-xl">
-                    <Image src={p.image_url} alt="" fill className="object-cover" />
-                  </div>
-                )}
-                <p className="whitespace-pre-wrap text-sm leading-6 text-stone-800">{p.content}</p>
-                <p className="mt-2 text-[11px] text-stone-400">
-                  {new Date(p.created_at).toLocaleDateString("ko-KR")}
-                </p>
-              </div>
-            )) : (
-              <div className="rounded-2xl border border-dashed border-stone-200 bg-stone-50 p-6 text-center text-sm text-stone-400">
-                아직 활동 소식이 없어요.<br />
-                {(isOwner || isMember) ? "첫 소식을 올려보세요!" : "가입하면 소식을 올릴 수 있어요."}
-              </div>
+            {(isOwner || isMember) && (
+              <PostForm groupId={group.id} isOwner={!!isOwner} />
             )}
+            {posts.filter((p) => !p.is_notice).length > 0
+              ? posts.filter((p) => !p.is_notice).map((p) => (
+                <div key={p.id} className="rounded-2xl border border-stone-200 bg-white p-4">
+                  {p.image_url && (
+                    <div className="relative mb-3 h-48 w-full overflow-hidden rounded-xl">
+                      <Image src={p.image_url} alt="" fill className="object-cover" />
+                    </div>
+                  )}
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-stone-800">{p.content}</p>
+                  <p className="mt-2 text-[11px] text-stone-400">
+                    {new Date(p.created_at).toLocaleDateString("ko-KR")}
+                  </p>
+                </div>
+              ))
+              : (
+                <div className="rounded-2xl border border-dashed border-stone-200 bg-stone-50 p-6 text-center text-sm text-stone-400">
+                  아직 활동 소식이 없어요.<br />
+                  {(isOwner || isMember) ? "첫 소식을 올려보세요!" : "가입하면 소식을 올릴 수 있어요."}
+                </div>
+              )}
           </div>
         </section>
 

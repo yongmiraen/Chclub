@@ -31,6 +31,7 @@ export type GroupPost = {
   author_id: string | null;
   content: string;
   image_url: string | null;
+  is_notice: boolean;
   created_at: string;
 };
 
