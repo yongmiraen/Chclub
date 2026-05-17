@@ -1,123 +1,52 @@
 "use client";
 
-import {
-  useActionState,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type FormEvent,
-} from "react";
+import { useActionState, useState } from "react";
 import { joinGroup } from "@/lib/actions";
 import type { ActionResult } from "@/lib/actions";
 
 type Props = {
   groupId: string;
   full: boolean;
-  userName?: string; // 로그인 사용자 이름 (있으면 로그인 상태)
+  userName?: string;
 };
-
-const STORAGE_KEY = "kroso:joined";
-const CHANGE_EVENT = "kroso:joined-change";
-
-type JoinedMap = Record<string, { nickname: string }>;
-
-function readJoined(): JoinedMap {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
-  catch { return {}; }
-}
-
-function writeJoined(map: JoinedMap) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
-  window.dispatchEvent(new Event(CHANGE_EVENT));
-}
-
-function subscribe(cb: () => void) {
-  window.addEventListener(CHANGE_EVENT, cb);
-  window.addEventListener("storage", cb);
-  return () => {
-    window.removeEventListener(CHANGE_EVENT, cb);
-    window.removeEventListener("storage", cb);
-  };
-}
-
-function useJoinedRecord(groupId: string) {
-  return useSyncExternalStore<{ nickname: string } | null>(
-    subscribe,
-    () => readJoined()[groupId] ?? null,
-    () => null,
-  );
-}
 
 const inputCls =
   "w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 focus:border-amber-500 focus:outline-none";
 
 export default function JoinPanel({ groupId, full, userName }: Props) {
-  const isLoggedIn = !!userName;
   const boundAction = joinGroup.bind(null, groupId);
-  const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
-    boundAction, null,
-  );
-
-  const pendingNicknameRef = useRef<string>("");
-  const lastConsumedRef = useRef<ActionResult | null>(null);
-  const joined = useJoinedRecord(groupId);
+  const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(boundAction, null);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    if (!state || state === lastConsumedRef.current) return;
-    lastConsumedRef.current = state;
-    if (state.ok && pendingNicknameRef.current) {
-      const next = readJoined();
-      next[groupId] = { nickname: pendingNicknameRef.current };
-      writeJoined(next);
-      pendingNicknameRef.current = "";
-      setOpen(false);
-    }
-  }, [state, groupId]);
-
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    const fd = new FormData(e.currentTarget);
-    pendingNicknameRef.current =
-      (fd.get("nickname") as string) || userName || "익명";
-  }
-
-  const cta = joined ? (
-    <div className="flex items-center gap-3">
-      <div className="flex-1 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        <strong>{joined.nickname}</strong> 으로 함께하고 있어요 🙌
+  if (state?.ok) {
+    return (
+      <div className="sticky bottom-0 z-10 border-t border-stone-100 bg-white/95 px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)] backdrop-blur">
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <span className="text-lg">⏳</span>
+          <div>
+            <p className="text-sm font-semibold text-amber-900">가입 신청 완료</p>
+            <p className="text-xs text-amber-700">방장이 수락하면 멤버가 돼요.</p>
+          </div>
+        </div>
       </div>
-      <button
-        type="button"
-        onClick={() => {
-          if (!confirm("참여 표시를 지울게요. 계속할까요?")) return;
-          const next = readJoined();
-          delete next[groupId];
-          writeJoined(next);
-        }}
-        className="rounded-xl border border-stone-200 px-3 py-3 text-xs text-stone-600 active:bg-stone-100"
-      >
-        해제
-      </button>
-    </div>
-  ) : full ? (
-    <button disabled className="w-full rounded-xl bg-stone-200 px-4 py-3.5 text-sm font-medium text-stone-500">
-      지금은 자리가 없어요
-    </button>
-  ) : (
-    <button
-      type="button"
-      onClick={() => setOpen(true)}
-      className="w-full rounded-xl bg-amber-700 px-4 py-3.5 text-base font-semibold text-white shadow-sm active:bg-amber-800"
-    >
-      가입하기
-    </button>
-  );
+    );
+  }
 
   return (
     <>
       <div className="sticky bottom-0 z-10 border-t border-stone-100 bg-white/95 px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)] backdrop-blur">
-        {cta}
+        {full ? (
+          <button disabled className="w-full rounded-xl bg-stone-200 px-4 py-3.5 text-sm font-medium text-stone-500">
+            지금은 자리가 없어요
+          </button>
+        ) : (
+          <button
+            onClick={() => setOpen(true)}
+            className="w-full rounded-xl bg-amber-700 px-4 py-3.5 text-base font-semibold text-white shadow-sm active:bg-amber-800"
+          >
+            가입하기
+          </button>
+        )}
       </div>
 
       {open && (
@@ -128,75 +57,42 @@ export default function JoinPanel({ groupId, full, userName }: Props) {
           <div className="w-full max-w-[430px] rounded-t-2xl bg-white p-5 pb-[max(env(safe-area-inset-bottom),20px)] shadow-2xl">
             <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-stone-300" />
             <h3 className="text-lg font-bold text-stone-900">같이 해요</h3>
+            <p className="mt-1 text-xs text-stone-500">
+              <strong className="text-stone-700">{userName}</strong> 으로 신청해요.
+            </p>
 
-            {isLoggedIn ? (
-              /* 로그인 사용자: 이름 자동, 가입 이유만 입력 */
-              <>
-                <p className="mt-1 text-xs text-stone-500">
-                  <strong className="text-stone-700">{userName}</strong> 으로 신청해요.
-                </p>
-                {state && !state.ok && (
-                  <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
-                    {state.error}
-                  </div>
-                )}
-                <form action={formAction} onSubmit={handleSubmit} className="mt-4 space-y-3">
-                  <input type="hidden" name="nickname" value={userName} />
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-stone-800">
-                      가입하고 싶은 이유
-                      <span className="ml-1 text-xs font-normal text-stone-500">(선택)</span>
-                    </label>
-                    <textarea
-                      name="message"
-                      rows={4}
-                      maxLength={500}
-                      placeholder="방장에게 한마디 남겨요. 예) 성경공부에 관심이 많아 참여하고 싶어요."
-                      className={`${inputCls} leading-6`}
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    <button type="button" onClick={() => setOpen(false)}
-                      className="flex-1 rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-700">
-                      닫기
-                    </button>
-                    <button type="submit" disabled={pending}
-                      className="flex-[2] rounded-xl bg-amber-700 px-4 py-3 text-sm font-semibold text-white active:bg-amber-800 disabled:bg-stone-400">
-                      {pending ? "잠깐만요…" : "신청해요"}
-                    </button>
-                  </div>
-                </form>
-              </>
-            ) : (
-              /* 비로그인 사용자: 기존 폼 */
-              <>
-                <p className="mt-1 text-xs text-stone-500">
-                  닉네임을 남기면 방장이 연락할 수 있어요.
-                </p>
-                {state && !state.ok && (
-                  <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
-                    {state.error}
-                  </div>
-                )}
-                <form action={formAction} onSubmit={handleSubmit} className="mt-4 space-y-3">
-                  <input name="nickname" required maxLength={20} placeholder="닉네임" className={inputCls} />
-                  <input name="contact" maxLength={100} placeholder="연락처 (선택, 카톡ID·전화 등)" className={inputCls} />
-                  <textarea name="message" rows={3} maxLength={500}
-                    placeholder="방장에게 한마디 남겨요 (선택)"
-                    className={`${inputCls} leading-6`} />
-                  <div className="flex gap-2 pt-1">
-                    <button type="button" onClick={() => setOpen(false)}
-                      className="flex-1 rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-700">
-                      닫기
-                    </button>
-                    <button type="submit" disabled={pending}
-                      className="flex-[2] rounded-xl bg-amber-700 px-4 py-3 text-sm font-semibold text-white active:bg-amber-800 disabled:bg-stone-400">
-                      {pending ? "잠깐만요…" : "신청해요"}
-                    </button>
-                  </div>
-                </form>
-              </>
+            {state && !state.ok && (
+              <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                {state.error}
+              </div>
             )}
+
+            <form action={formAction} className="mt-4 space-y-3">
+              <input type="hidden" name="nickname" value={userName} />
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-stone-800">
+                  가입하고 싶은 이유
+                  <span className="ml-1 text-xs font-normal text-stone-500">(선택)</span>
+                </label>
+                <textarea
+                  name="message"
+                  rows={4}
+                  maxLength={500}
+                  placeholder="방장에게 한마디 남겨요. 예) 성경공부에 관심이 많아 참여하고 싶어요."
+                  className={`${inputCls} leading-6`}
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setOpen(false)}
+                  className="flex-1 rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-700">
+                  닫기
+                </button>
+                <button type="submit" disabled={pending}
+                  className="flex-[2] rounded-xl bg-amber-700 px-4 py-3 text-sm font-semibold text-white active:bg-amber-800 disabled:bg-stone-400">
+                  {pending ? "잠깐만요…" : "신청해요"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import { categoryLabel, categoryEmoji } from "@/lib/categories";
 import { toneFor } from "@/lib/theme";
@@ -50,6 +50,9 @@ export default async function GroupDetailPage({
   ]);
 
   if (groupError || !group) notFound();
+
+  // 비로그인 사용자는 로그인 페이지로
+  if (!user) redirect(`/login?next=/groups/${id}`);
 
   const posts = postsResult.data ?? [];
   const events = eventsResult.data ?? [];
