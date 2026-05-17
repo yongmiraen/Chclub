@@ -58,31 +58,37 @@ export default function EventCard({
       )}
 
       {/* 참석 정보 */}
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-xs text-stone-500">
-          참석 {attendeeCount}명
-          {event.max_attendees ? ` / 최대 ${event.max_attendees}명` : ""}
-        </span>
+      {(() => {
+        const isFull = !!event.max_attendees && attendeeCount >= event.max_attendees;
+        return (
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-xs text-stone-500">
+              참석 {attendeeCount}명
+              {event.max_attendees ? ` / 최대 ${event.max_attendees}명` : ""}
+              {isFull && !isAttending && (
+                <span className="ml-1.5 font-medium text-rose-500">마감</span>
+              )}
+            </span>
 
-        {!isPast && isLoggedIn && (
-          <button
-            disabled={isPending}
-            onClick={() => startTransition(async () => {
-              await toggleAttendance(event.id, groupId, isAttending);
-            })}
-            className={`rounded-full px-4 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
-              isAttending
-                ? "border border-stone-300 bg-white text-stone-600"
-                : "bg-amber-700 text-white"
-            }`}
-          >
-            {isAttending ? "참석 취소" : "참석할게요"}
-          </button>
-        )}
-        {isPast && (
-          <span className="text-xs text-stone-400">종료된 정모</span>
-        )}
-      </div>
+            {!isPast && isLoggedIn && (isAttending || !isFull) && (
+              <button
+                disabled={isPending}
+                onClick={() => startTransition(async () => {
+                  await toggleAttendance(event.id, groupId, isAttending);
+                })}
+                className={`rounded-full px-4 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
+                  isAttending
+                    ? "border border-stone-300 bg-white text-stone-600"
+                    : "bg-amber-700 text-white"
+                }`}
+              >
+                {isAttending ? "참석 취소" : "참석할게요"}
+              </button>
+            )}
+            {isPast && <span className="text-xs text-stone-400">종료된 정모</span>}
+          </div>
+        );
+      })()}
     </div>
   );
 }

@@ -500,11 +500,20 @@ export async function toggleAttendance(
   if (!user) return { ok: false, error: "로그인이 필요합니다." };
 
   if (isAttending) {
-    // 참석 취소
     await authClient.from("event_attendees")
       .delete().eq("event_id", eventId).eq("user_id", user.id);
   } else {
-    // 참석 등록
+    // 정원 초과 체크
+    const { data: event } = await supabase
+      .from("group_events").select("max_attendees").eq("id", eventId).single();
+    if (event?.max_attendees) {
+      const { count } = await supabase
+        .from("event_attendees")
+        .select("id", { count: "exact", head: true })
+        .eq("event_id", eventId);
+      if ((count ?? 0) >= event.max_attendees)
+        return { ok: false, error: "참석 인원이 가득 찼어요." };
+    }
     await authClient.from("event_attendees")
       .insert({ event_id: eventId, user_id: user.id });
   }
