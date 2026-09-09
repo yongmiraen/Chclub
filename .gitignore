@@ -36,8 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
-# claude code
-.claude
+# claude code — 스킬만 공유하고 나머지 로컬 설정은 무시
+.claude/*
+!.claude/skills/
 
 # typescript
 *.tsbuildinfo
